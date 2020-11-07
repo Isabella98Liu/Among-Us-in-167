@@ -6,6 +6,7 @@
 #include "Object.h"
 #include "Cube.h"
 #include "PointCloud.h"
+#include "Model.h"
 #include "CommonValues.h"
 
 class Window
@@ -16,14 +17,21 @@ public:
 	static int width;
 	static int height;
 	static const char* windowTitle;
+	static glm::vec2 cursor_pos;
+	static glm::vec2 last_cursor_pos;
+	static bool is_rotating;
 
-	// Objects to Render
-	static Cube* cube;
-	static PointCloud * cubePoints;
-	// extra external obj models
-	static PointCloud* bearPoints;
-	static PointCloud* bunnyPoints;
-	static PointCloud* sandalPoints;
+	//// Objects to Render
+	//static Cube* cube;
+	//static PointCloud * cubePoints;
+	//// extra external obj models
+	//static PointCloud* bearPoints;
+	//static PointCloud* bunnyPoints;
+	//static PointCloud* sandalPoints;
+
+	static Model* bear;
+	static Model* bunny;
+	static Model* sandal;
 
 	// Camera Matrices
 	static glm::mat4 projection;
@@ -48,6 +56,11 @@ public:
 
 	// Callbacks
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+	static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+
+	static glm::vec3 ballMapping(glm::vec2 start);
 };
 
 #endif
