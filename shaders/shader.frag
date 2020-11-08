@@ -31,6 +31,7 @@ struct Material
 	vec3 diffuse;
 	vec3 specular;
 	float shininess;
+	vec3 color;
 };
 
 uniform Material material;
@@ -53,7 +54,7 @@ vec4 CalcLightByDirection(Light light, vec3 direction)
 	specularFactor = pow(specularFactor, material.shininess);
 	vec3 specularLight = specularFactor * material.specular;
 	
-	return vec4(light.color * (ambientLight + diffuseLight + specularLight), 1.0f);
+	return vec4(light.color * material.color * (ambientLight + diffuseLight + specularLight), 1.0f);
 }
 
 vec4 CalcDirectionalLight()
@@ -81,10 +82,9 @@ void main()
 		vec3 normColor = (normalize(fragNormal) + 1) / 2.0;
 		fragColor = vec4(normColor, 1.0);
 	} else {
-		//vec3 direction = fragPos - light.position;s
-		//fragColor = CalcDirectionalLight() + CalcPointLight();
+		fragColor = CalcDirectionalLight() + CalcPointLight();
 		//fragColor = CalcDirectionalLight();
-		fragColor = CalcPointLight();
+		//fragColor = CalcPointLight();
 	}
 	
 }

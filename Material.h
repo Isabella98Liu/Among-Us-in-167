@@ -13,16 +13,16 @@
 class Material
 {
 private:
+	glm::vec3 color;
 	GLfloat shininess;
 	glm::vec3 ambient, diffuse, specular;
-	//glm::vec3 color;
 
 public:
 
-	Material(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine);
+	Material(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine, glm::vec3 colorFactor);
 	~Material();
 
-	void setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine);
+	void setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine, glm::vec3 colorFactor);
 	void sendMatToShader(const int shaderID);
 
 };

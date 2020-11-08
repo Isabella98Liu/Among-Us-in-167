@@ -7,7 +7,6 @@ int Window::height;
 const char* Window::windowTitle = "GLFW Starter Project";
 glm::vec2 Window::last_cursor_pos;
 glm::vec2 Window::cursor_pos;
-bool Window::is_rotating = false;
 
 // Light objects to Render
 DirectionalLight* Window::directionalLight;
@@ -18,6 +17,14 @@ Model* Window::bear;
 Model* Window::bunny;
 Model* Window::sandal;
 Model* currObj;
+
+// Key board input booleans
+bool is_rotating = false;
+bool light_rotating = false;
+bool both_rotating = false;
+
+bool light_scaling = false;
+bool both_scaling = false;
 
 // Camera Matrices 
 // Projection matrix:
@@ -55,10 +62,13 @@ bool Window::initializeProgram() {
 bool Window::initializeObjects()
 {
 	// Initialize light objects
-	//directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 	//directionalLight->translateLightModel(glm::vec3(0.0f, 3.0f, 10.0f));
-	pointLight = new PointLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(-2.0f, 2.0f, 2.0f), 0.1f, 0.0f, 0.0f);
-	pointLight->getModel()->setMaterial(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+
+	pointLight = new PointLight("Models/sphere.obj", glm::vec3(1.0f, 0.87f, 0.0f), glm::vec3(-2.0f, 2.0f, 4.0f), 0.1f, 0.0f, 0.0f);
+	//pointLight->getModel()->setMaterial(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, pointLight->getColor());
+	pointLight->getModel()->setMaterial(glm::vec3(0.1f, 0.1f, 0.1f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(1.0f, 1.0f, 1.0f));
 
 	// Initialize models
 	bear = new Model("Models/bear.obj");
@@ -67,13 +77,13 @@ bool Window::initializeObjects()
 
 	// Set material for different  object
 	// diffuse
-	bear->setMaterial(glm::vec3(0.0f, 0.05f, 0.0f), glm::vec3(1.0f, 0.892f, 0.892f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f);
+	bunny->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(0.2f, 1.0f, 0.0f));
 	// specular
-	bunny->setMaterial(glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.99f, 0.99f, 0.99f), 0.99f);
+	bear->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, glm::vec3(0.0f, 1.0f, 1.0f));
 	// diffuse + specular
-	sandal->setMaterial(glm::vec3(0.25f, 0.25f, 0.25f), glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.774597f, 0.774597f, 0.774597f), 0.6f);
+	sandal->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.5f, 0.5f, 0.5f), 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-	// Set bear to be the first to display
+	// Set bear to be the first to display and to be rotate
 	currObj = bear;
 
 	return true;
@@ -176,8 +186,10 @@ void Window::displayCallback(GLFWwindow* window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
 	// Render the light objects
-	//directionalLight->sendLightToShader(shaderProgram);
+	// add a global directional light in order to see the origin color of the material
+	directionalLight->sendLightToShader(shaderProgram);		
 	//directionalLight->getModel()->draw(view, projection, shaderProgram);
+
 	pointLight->sendLightToShader(shaderProgram);
 	pointLight->getModel()->draw(view, projection, shaderProgram);
 
@@ -219,6 +231,27 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			currObj = sandal;
 			break;
 
+		case GLFW_KEY_1:
+			light_rotating = false;
+			both_rotating = false;
+			light_scaling = false;
+			both_scaling = false;
+			break;
+
+		case GLFW_KEY_2:
+			light_rotating = true;
+			both_rotating = false;
+			light_scaling = true;
+			both_scaling = false;
+			break;
+
+		case GLFW_KEY_3:
+			light_rotating = false;
+			both_rotating = true;
+			light_scaling = false;
+			both_scaling = true;
+			break;
+			
 		case GLFW_KEY_N:
 			currObj->setNormalShadding();
 		
@@ -230,7 +263,15 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
 void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	currObj->resize(yoffset);
+	if (!light_scaling && !both_scaling)
+		currObj->resize(yoffset);
+	else if (light_scaling)
+		pointLight->scaling(yoffset);
+	else if (both_scaling)
+	{
+		currObj->resize(yoffset);
+		pointLight->scaling(yoffset);
+	}
 }
 
 void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -253,7 +294,15 @@ void Window::cursor_position_callback(GLFWwindow* window, double xpos, double yp
 	cursor_pos.y = ypos;
 	if (is_rotating)
 	{
-		currObj->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
+		if (!light_rotating && !both_rotating)
+			currObj->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
+		else if (light_rotating)
+			pointLight->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
+		else if (both_rotating)
+		{
+			currObj->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
+			pointLight->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
+		}
 	}
 }
 

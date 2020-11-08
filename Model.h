@@ -39,7 +39,7 @@ public:
     void rotate(glm::vec3 start, glm::vec3 end);
     void translate(glm::vec3 translation);
 
-    void setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine);
+    void setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine, glm::vec3 color);
     void setNormalShadding();
 };
 

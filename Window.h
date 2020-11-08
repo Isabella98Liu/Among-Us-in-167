@@ -21,7 +21,6 @@ public:
 	static const char* windowTitle;
 	static glm::vec2 cursor_pos;
 	static glm::vec2 last_cursor_pos;
-	static bool is_rotating;
 
 	// Objects to Render
 	static Model* bear;

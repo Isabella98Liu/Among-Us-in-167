@@ -59,7 +59,7 @@ Model::Model(std::string objFilename)
 	normalShadding = false;
 
 	// Set the base material of the model (yellow rubber)
-	material = new Material(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.55f, 0.55f, 0.55f), glm::vec3(0.7f, 0.7f, 0.7f), 0.25f);
+	material = new Material(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.25f, glm::vec3(1.0f, 1.0f, 1.0f));
 	// Generate a Vertex Array and Vertex Buffer Object
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -195,9 +195,9 @@ void Model::translate(glm::vec3 translation)
 	model = glm::translate(translation) * model;
 }
 
-void Model::setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine)
+void Model::setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine, glm::vec3 color)
 {
-	material->setMaterial(ambientFactor, diffuseFactor, specularFactor, shine);
+	material->setMaterial(ambientFactor, diffuseFactor, specularFactor, shine, color);
 }
 
 void Model::setNormalShadding()

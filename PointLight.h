@@ -6,7 +6,7 @@ class PointLight : public Light
 {
 private:
 	glm::vec3 position;		// position of the point light
-	Model* lightModel;
+	static Model* lightModel;
 	
 	GLfloat exponent, linear, constant;
 
@@ -19,5 +19,8 @@ public:
 	void sendLightToShader(const int shaderID);
 
 	void translateLightModel(glm::vec3 translation);
+
+	void PointLight::rotate(glm::vec3 start, glm::vec3 end);
+	void PointLight::scaling(double offset);
 };
 
