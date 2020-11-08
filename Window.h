@@ -7,6 +7,8 @@
 #include "Cube.h"
 #include "PointCloud.h"
 #include "Model.h"
+#include "DirectionalLight.h"
+#include "PointLight.h"
 #include "CommonValues.h"
 
 class Window
@@ -21,17 +23,14 @@ public:
 	static glm::vec2 last_cursor_pos;
 	static bool is_rotating;
 
-	//// Objects to Render
-	//static Cube* cube;
-	//static PointCloud * cubePoints;
-	//// extra external obj models
-	//static PointCloud* bearPoints;
-	//static PointCloud* bunnyPoints;
-	//static PointCloud* sandalPoints;
-
+	// Objects to Render
 	static Model* bear;
 	static Model* bunny;
 	static Model* sandal;
+
+	// Light objects
+	static DirectionalLight* directionalLight;
+	static PointLight* pointLight;
 
 	// Camera Matrices
 	static glm::mat4 projection;

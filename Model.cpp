@@ -24,6 +24,7 @@ Model::Model(std::string objFilename)
 			{
 				glm::vec3 normal;
 				ss >> normal.x >> normal.y >> normal.z;
+				normal = glm::normalize(normal);
 				normals.push_back(normal);
 			}
 			else if (label == "f")
@@ -47,12 +48,22 @@ Model::Model(std::string objFilename)
 	// Normalize the object to fit in the screen
 	normalize();
 	
-	// Set the color
-	color = glm::vec3(0, 255, 222);
+	// Set the color of the model (red) 
+	color = glm::vec3(1.0f, 0.0f, 0.0f);
 
+	// Temporarily set the light color (white) and its position
+	lightColor = glm::vec3(1.0f, 1.0f, 0.0f);
+	lightPos = glm::vec3(0.0f, 20.0f, 10.0f);
+
+	// Default normal mapping mode set to false
+	normalShadding = false;
+
+	// Set the base material of the model (yellow rubber)
+	material = new Material(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.55f, 0.55f, 0.55f), glm::vec3(0.7f, 0.7f, 0.7f), 0.25f);
 	// Generate a Vertex Array and Vertex Buffer Object
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &NBO);
 
 	// Bind VAO
 	glBindVertexArray(VAO);
@@ -63,6 +74,13 @@ Model::Model(std::string objFilename)
 	// Enable Vertex Attribute 0 to pass point data through to the shader
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+
+	// Bind VBO to the bound VAO, and store the normal data
+	glBindBuffer(GL_ARRAY_BUFFER, NBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), normals.data(), GL_STATIC_DRAW);
+	// Enable Vertex Attribute 1 to pass normal data through to the shader
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 
 	// Generate EBO, bind the EBO to the bound VAO, and send the index data
 	glGenBuffers(1, &EBO);
@@ -78,6 +96,7 @@ Model::~Model()
 {
 	// Delete the VBO/VEO and VAO
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &NBO);
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &VAO);
 }
@@ -91,7 +110,12 @@ void Model::draw(const glm::mat4& view, const glm::mat4& projection, GLuint shad
 	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, false, glm::value_ptr(view));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, false, glm::value_ptr(projection));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	glUniform3fv(glGetUniformLocation(shader, "color"), 1, glm::value_ptr(color));
+
+	// Send material variable to shader
+	material->sendMatToShader(shader);
+
+	// Send normal mapping information to the shader
+	glUniform1i(glGetUniformLocation(shader, "normalShadding"), normalShadding);
 
 	// Bind the VAO
 	glBindVertexArray(VAO);
@@ -113,7 +137,7 @@ void Model::update()
 void Model::spin(float deg)
 {
 	// Update the model matrix by multiplying a rotation matrix
-	model = model * glm::rotate(glm::radians(deg), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(glm::radians(deg), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
 }
 
 void Model::normalize()
@@ -150,18 +174,33 @@ void Model::normalize()
 	
 	// Set the model matrix to an identity matrix. 
 	model = glm::mat4(1);
-	// take the identity matrix and apply translation to it
-	model = glm::translate(model, -centroid);
-	model = glm::scale(model, glm::vec3(scale_factor, scale_factor, scale_factor));
+
+	// Take the identity matrix and apply translation to it
+	model = glm::translate(-centroid) * model;
+	model = glm::scale(glm::vec3(scale_factor, scale_factor, scale_factor)) * model;
 }
 
 void Model::resize(double offset)
 {
-	model = glm::scale(model, glm::vec3(1.0f + offset * 0.02f));
+	model = glm::scale(glm::vec3(1.0f + offset * 0.02f)) * model;
 }
 
 void Model::rotate(glm::vec3 start, glm::vec3 end)
 {
-	glm::mat4 R = glm::rotate(0.02f, glm::cross(start, end));
-	model = R * model;
+	model = glm::rotate(0.02f, glm::cross(start, end)) * model;
+}
+
+void Model::translate(glm::vec3 translation)
+{
+	model = glm::translate(translation) * model;
+}
+
+void Model::setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine)
+{
+	material->setMaterial(ambientFactor, diffuseFactor, specularFactor, shine);
+}
+
+void Model::setNormalShadding()
+{
+	normalShadding = !normalShadding;
 }

@@ -9,15 +9,11 @@ glm::vec2 Window::last_cursor_pos;
 glm::vec2 Window::cursor_pos;
 bool Window::is_rotating = false;
 
-//// Objects to Render
-//Cube * Window::cube;
-//PointCloud * Window::cubePoints;
-//// extra external obj models to render
-//PointCloud* Window::bearPoints;
-//PointCloud* Window::bunnyPoints;
-//PointCloud* Window::sandalPoints;
-//PointCloud* currObj;
+// Light objects to Render
+DirectionalLight* Window::directionalLight;
+PointLight* Window::pointLight;
 
+// Objects to Render
 Model* Window::bear;
 Model* Window::bunny;
 Model* Window::sandal;
@@ -37,7 +33,6 @@ glm::mat4 Window::view = glm::lookAt(Window::eyePos, Window::lookAtPoint, Window
 GLuint Window::shaderProgram; 
 
 
-
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	shaderProgram = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
@@ -49,27 +44,36 @@ bool Window::initializeProgram() {
 		return false;
 	}
 
+	//----- Temporary add eyeposition shader to here, to be revised in future
+	glUseProgram(shaderProgram);
+	glUniform3fv(glGetUniformLocation(shaderProgram, "eyePosition"), 1, glm::value_ptr(eyePos));
+	glUseProgram(0);
+
 	return true;
 }
 
 bool Window::initializeObjects()
 {
-	// Create a cube of size 5.
-	//cube = new Cube(5.0f);
+	// Initialize light objects
+	//directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+	//directionalLight->translateLightModel(glm::vec3(0.0f, 3.0f, 10.0f));
+	pointLight = new PointLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(-2.0f, 2.0f, 2.0f), 0.1f, 0.0f, 0.0f);
+	pointLight->getModel()->setMaterial(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
 
-	// Create a point cloud consisting of cube vertices.
-	//cubePoints = new PointCloud("foo", 100);
-	//currObj = new PointCloud("", POINT_SIZE);
-	//bearPoints = new PointCloud("Models/bear.obj", POINT_SIZE);
-	//bunnyPoints = new PointCloud("Models/bunny.obj", POINT_SIZE);
-	//sandalPoints = new PointCloud("Models/SandalF20.obj", POINT_SIZE);
+	// Initialize models
 	bear = new Model("Models/bear.obj");
 	bunny = new Model("Models/bunny.obj");
 	sandal = new Model("Models/SandalF20.obj");
 
-	//currObj->setNextObj(bearPoints);
-	// Set cube to be the first to display
-	//currObj = bearPoints;
+	// Set material for different  object
+	// diffuse
+	bear->setMaterial(glm::vec3(0.0f, 0.05f, 0.0f), glm::vec3(1.0f, 0.892f, 0.892f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f);
+	// specular
+	bunny->setMaterial(glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.99f, 0.99f, 0.99f), 0.99f);
+	// diffuse + specular
+	sandal->setMaterial(glm::vec3(0.25f, 0.25f, 0.25f), glm::vec3(0.4f, 0.4f, 0.4f), glm::vec3(0.774597f, 0.774597f, 0.774597f), 0.6f);
+
+	// Set bear to be the first to display
 	currObj = bear;
 
 	return true;
@@ -78,12 +82,6 @@ bool Window::initializeObjects()
 void Window::cleanUp()
 {
 	// Deallcoate the objects.
-	//delete cube;
-	//delete cubePoints;
-	//delete bearPoints;
-	//delete bunnyPoints;
-	//delete sandalPoints;
-
 	delete bear;
 	delete bunny;
 	delete sandal;
@@ -177,6 +175,12 @@ void Window::displayCallback(GLFWwindow* window)
 	// Clear the color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
+	// Render the light objects
+	//directionalLight->sendLightToShader(shaderProgram);
+	//directionalLight->getModel()->draw(view, projection, shaderProgram);
+	pointLight->sendLightToShader(shaderProgram);
+	pointLight->getModel()->draw(view, projection, shaderProgram);
+
 	// Render the objects
 	currObj->draw(view, projection, shaderProgram);
 
@@ -202,7 +206,7 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
 
-			// switch between the three external obj models
+		// switch between the three external obj models
 		case GLFW_KEY_F1:
 			currObj = bear;
 			break;
@@ -215,47 +219,13 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			currObj = sandal;
 			break;
 
+		case GLFW_KEY_N:
+			currObj->setNormalShadding();
+		
 		default:
 			break;
 		}
 	}
-
-	//// Check for a key press.
-	//if (action == GLFW_PRESS)
-	//{
-	//	switch (key)
-	//	{
-	//	case GLFW_KEY_ESCAPE:
-	//		// Close the window. This causes the program to also terminate.
-	//		glfwSetWindowShouldClose(window, GL_TRUE);				
-	//		break;
-
-	//	// switch between the three external obj models
-	//	case GLFW_KEY_F1:
-	//		currObj->setNextObj(bearPoints);
-	//		break;
-
-	//	case GLFW_KEY_F2:
-	//		currObj->setNextObj(bunnyPoints);
-	//		break;
-
-	//	case GLFW_KEY_F3:
-	//		currObj->setNextObj(sandalPoints);
-	//		break;
-
-	//	//	control the pointsize of pointcould models
-	//	case GLFW_KEY_S:
-	//		currObj->updatePointSize(-1.0f);
-	//		break;
-
-	//	case GLFW_KEY_L:
-	//		currObj->updatePointSize(1.0f);
-	//		break;
-
-	//	default:
-	//		break;
-	//	}
-	//}
 }
 
 void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -283,15 +253,13 @@ void Window::cursor_position_callback(GLFWwindow* window, double xpos, double yp
 	cursor_pos.y = ypos;
 	if (is_rotating)
 	{
-		//printf("last position: %f,%f  current position: %f,%f \n", last_cursor_pos.x, last_cursor_pos.y, cursor_pos.x, cursor_pos.y);
 		currObj->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
 	}
 }
 
-
-// Mapping the mouse position from 2D to 3D unit sphere
 glm::vec3 Window::ballMapping(glm::vec2 point)
 {
+	// Mapping the mouse position from 2D to 3D unit sphere
 	glm::vec3 pos;
 	float d;
 	// rescale the x/w.x from [0,1] to [-1,1]
