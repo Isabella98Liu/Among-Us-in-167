@@ -1,21 +1,22 @@
-#include "Window.h"
+#include "DisplayWindow.h"
 
 
 // Window Properties
-int Window::width;
-int Window::height;
-const char* Window::windowTitle = "GLFW Starter Project";
-glm::vec2 Window::last_cursor_pos;
-glm::vec2 Window::cursor_pos;
+int DisplayWindow::width;
+int DisplayWindow::height;
+const char* DisplayWindow::windowTitle = "GLFW Starter Project";
+glm::vec2 DisplayWindow::last_cursor_pos;
+glm::vec2 DisplayWindow::cursor_pos;
 
 // Light objects to Render
-DirectionalLight* Window::directionalLight;
-PointLight* Window::pointLight;
+DirectionalLight* DisplayWindow::directionalLight;
+PointLight* DisplayWindow::pointLight;
+SpotLight* DisplayWindow::spotLight;
 
 // Objects to Render
-Model* Window::bear;
-Model* Window::bunny;
-Model* Window::sandal;
+Model* DisplayWindow::bear;
+Model* DisplayWindow::bunny;
+Model* DisplayWindow::sandal;
 Model* currObj;
 
 // Key board input booleans
@@ -26,21 +27,33 @@ bool both_rotating = false;
 bool light_scaling = false;
 bool both_scaling = false;
 
+// Control panel variables
+bool show_panel = false;
+ImVec4 input_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+float input_f;
+float input_f1[3];
+float input_f2[3];
+float input_f3[3];
+float input_f4[3];
+
+ImVec4 input_color2 = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+float input_f5[3];
+
 // Camera Matrices 
 // Projection matrix:
-glm::mat4 Window::projection; 
+glm::mat4 DisplayWindow::projection; 
 
 // View Matrix:
-glm::vec3 Window::eyePos(0, 0, 20);			// Camera position.
-glm::vec3 Window::lookAtPoint(0, 0, 0);		// The point we are looking at.
-glm::vec3 Window::upVector(0, 1, 0);		// The up direction of the camera.
-glm::mat4 Window::view = glm::lookAt(Window::eyePos, Window::lookAtPoint, Window::upVector);
+glm::vec3 DisplayWindow::eyePos(0, 0, 20);			// Camera position.
+glm::vec3 DisplayWindow::lookAtPoint(0, 0, 0);		// The point we are looking at.
+glm::vec3 DisplayWindow::upVector(0, 1, 0);		// The up direction of the camera.
+glm::mat4 DisplayWindow::view = glm::lookAt(DisplayWindow::eyePos, DisplayWindow::lookAtPoint, DisplayWindow::upVector);
 
 // Shader Program ID
-GLuint Window::shaderProgram; 
+GLuint DisplayWindow::shaderProgram; 
 
 
-bool Window::initializeProgram() {
+bool DisplayWindow::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	shaderProgram = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
 
@@ -59,7 +72,7 @@ bool Window::initializeProgram() {
 	return true;
 }
 
-bool Window::initializeObjects()
+bool DisplayWindow::initializeObjects()
 {
 	// Initialize light objects
 
@@ -70,6 +83,9 @@ bool Window::initializeObjects()
 	//pointLight->getModel()->setMaterial(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.0f, pointLight->getColor());
 	pointLight->getModel()->setMaterial(glm::vec3(0.1f, 0.1f, 0.1f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(1.0f, 1.0f, 1.0f));
 
+	spotLight = new SpotLight("Models/sphere.obj", glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-1.0f, 0.0f, 0.0f), 0.1f, 0.0f, 0.0f, 20.0f);
+	spotLight->getModel()->setMaterial(glm::vec3(0.1f, 0.1f, 0.1f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(1.0f, 1.0f, 1.0f));
+		
 	// Initialize models
 	bear = new Model("Models/bear.obj");
 	bunny = new Model("Models/bunny.obj");
@@ -79,7 +95,7 @@ bool Window::initializeObjects()
 	// diffuse
 	bunny->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(0.2f, 1.0f, 0.0f));
 	// specular
-	bear->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, glm::vec3(0.0f, 1.0f, 1.0f));
+	bear->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), 0.8f, glm::vec3(0.0f, 1.0f, 1.0f));
 	// diffuse + specular
 	sandal->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.5f, 0.5f, 0.5f), 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -89,18 +105,22 @@ bool Window::initializeObjects()
 	return true;
 }
 
-void Window::cleanUp()
+void DisplayWindow::cleanUp()
 {
 	// Deallcoate the objects.
 	delete bear;
 	delete bunny;
 	delete sandal;
 
+	delete directionalLight;
+	delete pointLight;
+	delete spotLight;
+
 	// Delete the shader program.
 	glDeleteProgram(shaderProgram);
 }
 
-GLFWwindow* Window::createWindow(int width, int height)
+GLFWwindow* DisplayWindow::createWindow(int width, int height)
 {
 	// Initialize GLFW.
 	if (!glfwInit())
@@ -153,37 +173,37 @@ GLFWwindow* Window::createWindow(int width, int height)
 	glfwSwapInterval(0);
 
 	// Call the resize callback to make sure things get drawn immediately.
-	Window::resizeCallback(window, width, height);
+	DisplayWindow::resizeCallback(window, width, height);
 
 	return window;
 }
 
-void Window::resizeCallback(GLFWwindow* window, int width, int height)
+void DisplayWindow::resizeCallback(GLFWwindow* window, int width, int height)
 {
 #ifdef __APPLE__
 	// In case your Mac has a retina display.
 	glfwGetFramebufferSize(window, &width, &height); 
 #endif
-	Window::width = width;
-	Window::height = height;
+	DisplayWindow::width = width;
+	DisplayWindow::height = height;
 	// Set the viewport size.
 	glViewport(0, 0, width, height);
 
 	// Set the projection matrix.
-	Window::projection = glm::perspective(glm::radians(60.0), 
+	DisplayWindow::projection = glm::perspective(glm::radians(60.0), 
 								double(width) / (double)height, 1.0, 1000.0);
 }
 
-void Window::idleCallback()
+void DisplayWindow::idleCallback()
 {
 	// Perform any necessary updates here 
 	currObj->update();
 }
 
-void Window::displayCallback(GLFWwindow* window)
+void DisplayWindow::displayCallback(GLFWwindow* window)
 {	
 	// Clear the color and depth buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+	 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
 	// Render the light objects
 	// add a global directional light in order to see the origin color of the material
@@ -193,17 +213,82 @@ void Window::displayCallback(GLFWwindow* window)
 	pointLight->sendLightToShader(shaderProgram);
 	pointLight->getModel()->draw(view, projection, shaderProgram);
 
+	//spotLight->sendLightToShader(shaderProgram);
+	//spotLight->getModel()->draw(view, projection, shaderProgram);
+
 	// Render the objects
 	currObj->draw(view, projection, shaderProgram);
+
+	if (show_panel)
+	{
+		// Start the Dear ImGui frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::Begin("Control Panel");
+
+		// Model editor panel
+		ImGui::Text("Model's infomation:");
+
+		glm::vec3 model_color = currObj->getMaterial()->getColor();
+		input_color = ImVec4(model_color.x, model_color.y, model_color.z, 1.0f);
+		readVec3(input_f1, currObj->getMaterial()->getAmbient());
+		readVec3(input_f2, currObj->getMaterial()->getDiffuse());
+		readVec3(input_f3, currObj->getMaterial()->getSpecular());
+		input_f = currObj->getMaterial()->getShiness();
+
+		ImGui::ColorEdit3("Model's Color", (float*)&input_color); 
+		ImGui::SliderFloat3("Ambient", input_f1, 0.0f, 1.0f);
+		ImGui::SliderFloat3("Diffuse", input_f2, 0.0f, 1.0f);
+		ImGui::SliderFloat3("Specular", input_f3, 0.0f, 1.0f);
+		ImGui::SliderFloat("Shininess", &input_f, 0.01f, 1.0f);
+
+		glm::vec3 color_new = glm::vec3(input_color.x, input_color.y, input_color.z);
+		glm::vec3 ambient_new = glm::vec3(input_f1[0], input_f1[1], input_f1[2]);
+		glm::vec3 diffuse_new = glm::vec3(input_f2[0], input_f2[1], input_f2[2]);
+		glm::vec3 specular_new = glm::vec3(input_f3[0], input_f3[1], input_f3[2]);
+		GLfloat shininess_new = input_f;
+
+		currObj->setMaterial(ambient_new, diffuse_new, specular_new, shininess_new, color_new);
+
+		// Pointlight editor panel
+		ImGui::Text("Pointlight's infomation:");
+
+		glm::vec3 light_color = pointLight->getColor();
+		glm::vec3 light_coef = pointLight->getLightCoef();
+		input_color2 = ImVec4(light_color.x, light_color.y, light_color.z, 1.0f);
+		input_f5[0] = light_coef.x;	input_f5[1] = light_coef.y; input_f5[2] = light_coef.z;
+
+		ImGui::ColorEdit3("PointLight's Color", (float*)&input_color2); 
+		ImGui::SliderFloat3("Attenuation ", input_f5, 0.0f, 1.0f);
+
+		light_color = glm::vec3(input_color2.x, input_color2.y, input_color2.z);
+		light_coef = glm::vec3(input_f5[0], input_f5[1], input_f5[2]);
+		pointLight->setLight(light_coef, light_color);
+
+		ImGui::End();
+
+		// Render dear imgui into screen
+		ImGui::Render();
+
+		int display_w, display_h;
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glViewport(10, 10, display_w, display_h);
+		//glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+		//glClear(GL_COLOR_BUFFER_BIT);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
 
 	// Swap buffers.
 	glfwSwapBuffers(window);
+
 }
 
-void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	/*
 	 * TODO: Modify below to add your key callbacks.
@@ -254,6 +339,11 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 			
 		case GLFW_KEY_N:
 			currObj->setNormalShadding();
+			break;
+
+		case GLFW_KEY_C:
+			show_panel = !show_panel;
+			break;
 		
 		default:
 			break;
@@ -261,7 +351,7 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 	}
 }
 
-void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+void DisplayWindow::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	if (!light_scaling && !both_scaling)
 		currObj->resize(yoffset);
@@ -274,7 +364,7 @@ void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	}
 }
 
-void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+void DisplayWindow::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	// rotating the model
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -287,12 +377,12 @@ void Window::mouse_button_callback(GLFWwindow* window, int button, int action, i
 	}
 }
 
-void Window::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+void DisplayWindow::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	last_cursor_pos = cursor_pos;
 	cursor_pos.x = xpos;
 	cursor_pos.y = ypos;
-	if (is_rotating)
+	if (is_rotating && !show_panel)
 	{
 		if (!light_rotating && !both_rotating)
 			currObj->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
@@ -306,7 +396,7 @@ void Window::cursor_position_callback(GLFWwindow* window, double xpos, double yp
 	}
 }
 
-glm::vec3 Window::ballMapping(glm::vec2 point)
+glm::vec3 DisplayWindow::ballMapping(glm::vec2 point)
 {
 	// Mapping the mouse position from 2D to 3D unit sphere
 	glm::vec3 pos;

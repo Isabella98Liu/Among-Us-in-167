@@ -25,5 +25,11 @@ public:
 	void setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine, glm::vec3 colorFactor);
 	void sendMatToShader(const int shaderID);
 
+	glm::vec3 getAmbient() { return ambient; }
+	glm::vec3 getDiffuse() { return diffuse; }
+	glm::vec3 getSpecular() { return specular; }
+	GLfloat getShiness() { return shininess; }
+	glm::vec3 getColor() { return color; }
+
 };
 

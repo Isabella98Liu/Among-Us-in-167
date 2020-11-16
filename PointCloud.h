@@ -1,7 +1,7 @@
 #ifndef _POINT_CLOUD_H_
 #define _POINT_CLOUD_H_
 
-#include "Object.h"
+#include "BaseObject.h"
 
 #include <vector>
 #include <string>
@@ -12,7 +12,7 @@
 
 using namespace std;
 
-class PointCloud : public Object
+class PointCloud : public BaseObject
 {
 private:
 	std::vector<glm::vec3> points;

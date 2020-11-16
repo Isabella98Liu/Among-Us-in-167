@@ -10,21 +10,21 @@ void setup_callbacks(GLFWwindow* window)
 {
 	// Set the error callback.
 	glfwSetErrorCallback(error_callback);
-	
+
 	// Set the window resize callback.
-	glfwSetWindowSizeCallback(window, Window::resizeCallback);
+	glfwSetWindowSizeCallback(window, DisplayWindow::resizeCallback);
 
 	// Set the key callback.
-	glfwSetKeyCallback(window, Window::keyCallback);
+	glfwSetKeyCallback(window, DisplayWindow::keyCallback);
 
 	// Set the scroll callback
-	glfwSetScrollCallback(window, Window::scrollCallback);
+	glfwSetScrollCallback(window, DisplayWindow::scrollCallback);
 
 	// Set mouse button callback
-	glfwSetMouseButtonCallback(window, Window::mouse_button_callback);
+	glfwSetMouseButtonCallback(window, DisplayWindow::mouse_button_callback);
 
 	// Set mouse cursor callback
-	glfwSetCursorPosCallback(window, Window::cursor_position_callback);
+	glfwSetCursorPosCallback(window, DisplayWindow::cursor_position_callback);
 }
 
 void setup_opengl_settings()
@@ -46,57 +46,82 @@ void print_versions()
 {
 	// Get info of GPU and supported OpenGL version.
 	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "OpenGL version supported: " << glGetString(GL_VERSION) 
+	std::cout << "OpenGL version supported: " << glGetString(GL_VERSION)
 		<< std::endl;
 
 	//If the shading language symbol is defined.
 #ifdef GL_SHADING_LANGUAGE_VERSION
-	std::cout << "Supported GLSL version is: " << 
+	std::cout << "Supported GLSL version is: " <<
 		glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 #endif
 }
 
-
-
 int main(void)
 {
 	// Create the GLFW window.
-	GLFWwindow* window = Window::createWindow(640, 480);
-	if (!window) 
+	GLFWwindow* displayWindow = DisplayWindow::createWindow(640, 480);
+	if (!displayWindow)
 		exit(EXIT_FAILURE);
 
 	// Print OpenGL and GLSL versions.
 	print_versions();
 
 	// Setup callbacks.
-	setup_callbacks(window);
+	setup_callbacks(displayWindow);
 
 	// Setup OpenGL settings.
 	setup_opengl_settings();
 
 	// Initialize the shader program; exit if initialization fails.
-	if (!Window::initializeProgram()) 
+	if (!DisplayWindow::initializeProgram())
 		exit(EXIT_FAILURE);
 
 	// Initialize objects/pointers for rendering; exit if initialization fails.
-	if (!Window::initializeObjects()) 
+	if (!DisplayWindow::initializeObjects())
 		exit(EXIT_FAILURE);
-	
+
+
+	// ------------ ImGUI part ----------------- 
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsClassic();
+
+	// Setup Platform/Renderer bindings
+	ImGui_ImplGlfw_InitForOpenGL(displayWindow, true);
+	// GL 3.0 + GLSL 130
+	const char* glsl_version = "#version 130";
+	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	// ------------------------------------------
+
+
 	// Loop while GLFW window should stay open.
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(displayWindow))
 	{
 		// Main render display callback. Rendering of objects is done here. (Draw)
-		Window::displayCallback(window);
+		DisplayWindow::displayCallback(displayWindow);
 
 		// Idle callback. Updating objects, etc. can be done here. (Update)
-		Window::idleCallback();
+		DisplayWindow::idleCallback();
+
 	}
 
+	// Clean up ImGui 
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	// destroy objects created
-	Window::cleanUp();
+	DisplayWindow::cleanUp();
 
 	// Destroy the window.
-	glfwDestroyWindow(window);
+	glfwDestroyWindow(displayWindow);
 
 	// Terminate GLFW.
 	glfwTerminate();

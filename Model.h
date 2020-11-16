@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Object.h"
+#include "BaseObject.h"
 #include "Material.h"
 
 using namespace std;
@@ -11,7 +11,7 @@ using namespace std;
 #include <iostream>
 #include <vector>
 
-class Model : public Object
+class Model : public BaseObject
 {
 private:
     GLuint VAO;
@@ -41,5 +41,8 @@ public:
 
     void setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine, glm::vec3 color);
     void setNormalShadding();
+    
+    Material* getMaterial() { return material; }
+
 };
 

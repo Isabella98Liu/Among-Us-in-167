@@ -3,15 +3,22 @@
 
 #include "main.h"
 #include "shader.h"
-#include "Object.h"
+#include "BaseObject.h"
 #include "Cube.h"
 #include "PointCloud.h"
 #include "Model.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
+#include "SpotLight.h"
+
 #include "CommonValues.h"
 
-class Window
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+
+class DisplayWindow
 {
 public:
 
@@ -30,6 +37,7 @@ public:
 	// Light objects
 	static DirectionalLight* directionalLight;
 	static PointLight* pointLight;
+	static SpotLight* spotLight;
 
 	// Camera Matrices
 	static glm::mat4 projection;
@@ -59,6 +67,8 @@ public:
 	static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
 	static glm::vec3 ballMapping(glm::vec2 start);
+
+	static void readVec3(float* f, glm::vec3 vector) { f[0] = vector.x; f[1] = vector.y; f[2] = vector.z;}
 };
 
 #endif

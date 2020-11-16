@@ -1,11 +1,11 @@
 #ifndef _CUBE_H_
 #define _CUBE_H_
 
-#include "Object.h"
+#include "BaseObject.h"
 
 #include <vector>
 
-class Cube : public Object
+class Cube : public BaseObject
 {
 private:
 	GLuint VAO;

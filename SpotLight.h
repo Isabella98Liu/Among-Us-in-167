@@ -1,0 +1,29 @@
+#pragma once
+#include "Light.h"
+#include "Model.h"
+
+class SpotLight : public Light
+{
+private:
+	glm::vec3 position;		// position of the point light
+	glm::vec3 direction;	// direction of the spot light
+
+	Model* lightModel;
+
+	GLfloat exponent, linear, constant;
+	GLfloat angle;
+
+public:
+	SpotLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 lightDir, GLfloat exp, GLfloat lin, GLfloat con, GLfloat ang);
+	~SpotLight();
+
+	Model* getModel() { return lightModel; }
+
+	void sendLightToShader(const int shaderID);
+
+	void translateLightModel(glm::vec3 translation);
+
+	void rotate(glm::vec3 start, glm::vec3 end);
+
+};
+

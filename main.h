@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "Window.h"
+
+#include "DisplayWindow.h"
 
 #endif

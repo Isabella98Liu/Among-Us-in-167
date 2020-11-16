@@ -11,7 +11,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-class Object
+class BaseObject
 {
 protected:
 	glm::mat4 model;
