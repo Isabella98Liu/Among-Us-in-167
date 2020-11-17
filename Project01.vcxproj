@@ -120,6 +120,7 @@
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="DisplayWindow.cpp" />
+    <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="SpotLight.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -434,7 +435,9 @@
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="DisplayWindow.h" />
+    <ClInclude Include="SkyBox.h" />
     <ClInclude Include="SpotLight.h" />
+    <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

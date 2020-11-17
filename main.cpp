@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include "main.h"
 
 void error_callback(int error, const char* description)

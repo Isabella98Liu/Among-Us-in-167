@@ -10,13 +10,13 @@
 #include "DirectionalLight.h"
 #include "PointLight.h"
 #include "SpotLight.h"
+#include "SkyBox.h"
 
 #include "CommonValues.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
 
 class DisplayWindow
 {
@@ -46,6 +46,10 @@ public:
 
 	// Shader Program ID
 	static GLuint shaderProgram;
+	static GLuint skyBoxShader;
+
+	// SkyBox
+	static SkyBox* skyBox;
 
 	// Constructors and Destructors
 	static bool initializeProgram();

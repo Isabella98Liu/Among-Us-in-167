@@ -51,7 +51,21 @@ glm::mat4 DisplayWindow::view = glm::lookAt(DisplayWindow::eyePos, DisplayWindow
 
 // Shader Program ID
 GLuint DisplayWindow::shaderProgram; 
+GLuint DisplayWindow::skyBoxShader;
 
+// SkyBox
+SkyBox* DisplayWindow::skyBox;
+
+// textures files for skybox
+vector<std::string> faces
+{
+	"Textures/skype_rt.png",
+	"Textures/skype_lf.png",
+	"Textures/skype_up.png",
+	"Textures/skype_dn.png",
+	"Textures/skype_ft.png",
+	"Textures/skype_bk.png"
+};
 
 bool DisplayWindow::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -61,6 +75,16 @@ bool DisplayWindow::initializeProgram() {
 	if (!shaderProgram)
 	{
 		std::cerr << "Failed to initialize shader program" << std::endl;
+		return false;
+	}
+
+	// Load shader for SkyBox
+	skyBoxShader = LoadShaders("shaders/SkyBox.vert", "shaders/SkyBox.frag");
+
+	// Check the shader program.
+	if (!skyBoxShader)
+	{
+		std::cerr << "Failed to initialize SkyBox shader program" << std::endl;
 		return false;
 	}
 
@@ -74,8 +98,10 @@ bool DisplayWindow::initializeProgram() {
 
 bool DisplayWindow::initializeObjects()
 {
-	// Initialize light objects
+	// Initialize skybox objects
+	skyBox = new SkyBox(faces);
 
+	// Initialize light objects
 	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 	//directionalLight->translateLightModel(glm::vec3(0.0f, 3.0f, 10.0f));
 
@@ -92,10 +118,10 @@ bool DisplayWindow::initializeObjects()
 	sandal = new Model("Models/SandalF20.obj");
 
 	// Set material for different  object
-	// diffuse
-	bunny->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(0.2f, 1.0f, 0.0f));
 	// specular
 	bear->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), 0.8f, glm::vec3(0.0f, 1.0f, 1.0f));
+	// diffuse
+	bunny->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(0.2f, 1.0f, 0.0f));
 	// diffuse + specular
 	sandal->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.5f, 0.5f, 0.5f), 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -203,7 +229,10 @@ void DisplayWindow::idleCallback()
 void DisplayWindow::displayCallback(GLFWwindow* window)
 {	
 	// Clear the color and depth buffers
-	 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+
+	// Render the Sky Box
+	skyBox->draw(view, projection, skyBoxShader);
 
 	// Render the light objects
 	// add a global directional light in order to see the origin color of the material
@@ -218,7 +247,7 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 
 	// Render the objects
 	currObj->draw(view, projection, shaderProgram);
-
+	
 	if (show_panel)
 	{
 		// Start the Dear ImGui frame
