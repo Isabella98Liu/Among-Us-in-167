@@ -144,7 +144,7 @@ void Model::normalize()
 {
 	glm::vec3 points_max = vertices[0];
 	glm::vec3 points_min = vertices[0];
-	for (int i = 1; i < vertices.size(); i++) {
+	for (unsigned int i = 1; i < vertices.size(); i++) {
 		if (vertices[i].x < points_min.x)
 			points_min.x = vertices[i].x;
 		else if (vertices[i].x > points_max.x)
@@ -164,7 +164,7 @@ void Model::normalize()
 	
 	// Get the max distance of any point to the centroid
 	GLfloat distance_max = 0.0f;
-	for (int i = 0; i < vertices.size(); i++)
+	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
 		GLfloat distance = glm::length(vertices[i] - centroid);
 		if (distance > distance_max)
