@@ -6,7 +6,7 @@ SkyBox::SkyBox(vector<std::string> faceFiles)
 
 	loadMap();
 
-	int scale = 10;
+	int scale = 500;
 	// Generate a Cube for SkyBox
 	std::vector<glm::vec3> vertices
 	{

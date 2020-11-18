@@ -5,8 +5,14 @@
 int DisplayWindow::width;
 int DisplayWindow::height;
 const char* DisplayWindow::windowTitle = "GLFW Starter Project";
+bool DisplayWindow::keys[1024];
 glm::vec2 DisplayWindow::last_cursor_pos;
 glm::vec2 DisplayWindow::cursor_pos;
+GLfloat xChange = 0.0f;
+GLfloat yChange = 0.0f;
+
+GLfloat deltaTime = 0.0f;
+GLfloat lastTime = 0.0f;
 
 // Light objects to Render
 DirectionalLight* DisplayWindow::directionalLight;
@@ -44,10 +50,12 @@ float input_f5[3];
 glm::mat4 DisplayWindow::projection; 
 
 // View Matrix:
-glm::vec3 DisplayWindow::eyePos(0, 0, 20);			// Camera position.
-glm::vec3 DisplayWindow::lookAtPoint(0, 0, 0);		// The point we are looking at.
-glm::vec3 DisplayWindow::upVector(0, 1, 0);		// The up direction of the camera.
-glm::mat4 DisplayWindow::view = glm::lookAt(DisplayWindow::eyePos, DisplayWindow::lookAtPoint, DisplayWindow::upVector);
+Camera* DisplayWindow::camera;
+//glm::vec3 DisplayWindow::eyePos(0, 0, 20);			// Camera position.
+glm::mat4 DisplayWindow::view;
+//glm::vec3 DisplayWindow::lookAtPoint(0, 0, 0);		// The point we are looking at.
+//glm::vec3 DisplayWindow::upVector(0, 1, 0);		// The up direction of the camera.
+//glm::mat4 DisplayWindow::view = glm::lookAt(DisplayWindow::eyePos, DisplayWindow::lookAtPoint, DisplayWindow::upVector);
 
 // Shader Program ID
 GLuint DisplayWindow::shaderProgram; 
@@ -59,12 +67,12 @@ SkyBox* DisplayWindow::skyBox;
 // textures files for skybox
 vector<std::string> faces
 {
-	"Textures/skype_rt.png",
-	"Textures/skype_lf.png",
-	"Textures/skype_up.png",
-	"Textures/skype_dn.png",
-	"Textures/skype_ft.png",
-	"Textures/skype_bk.png"
+	"Textures/sh_rt.png",
+	"Textures/sh_lf.png",
+	"Textures/sh_up.png",
+	"Textures/sh_dn.png",
+	"Textures/sh_ft.png",
+	"Textures/sh_bk.png"
 };
 
 bool DisplayWindow::initializeProgram() {
@@ -88,11 +96,6 @@ bool DisplayWindow::initializeProgram() {
 		return false;
 	}
 
-	//----- Temporary add eyeposition shader to here, to be revised in future
-	glUseProgram(shaderProgram);
-	glUniform3fv(glGetUniformLocation(shaderProgram, "eyePosition"), 1, glm::value_ptr(eyePos));
-	glUseProgram(0);
-
 	return true;
 }
 
@@ -100,6 +103,9 @@ bool DisplayWindow::initializeObjects()
 {
 	// Initialize skybox objects
 	skyBox = new SkyBox(faces);
+
+	// Initialize a new Camera
+	camera = new Camera(glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f, 5.0f, 0.5f);
 
 	// Initialize light objects
 	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
@@ -141,6 +147,8 @@ void DisplayWindow::cleanUp()
 	delete directionalLight;
 	delete pointLight;
 	delete spotLight;
+
+	delete skyBox;
 
 	// Delete the shader program.
 	glDeleteProgram(shaderProgram);
@@ -231,6 +239,22 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 	// Clear the color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
+	// Calculate the deltatime
+	GLfloat currentTime = glfwGetTime();		// SDL_GetPerformanceCounter()
+	deltaTime = currentTime - lastTime;			// (currentTime - lastTime) * 1000 / SDL_GetPerformancefrequency();
+	lastTime = currentTime;
+
+	camera->keyControl(keys, deltaTime);
+	
+
+	// Obtaint the latest Camera informaiton (direction and position)
+	view = camera->calculateViewMatrix();
+
+	// Render
+	glUseProgram(shaderProgram);
+	glUniform3fv(glGetUniformLocation(shaderProgram, "eyePosition"), 1, glm::value_ptr(camera->getPosition()));
+	glUseProgram(0);
+
 	// Render the Sky Box
 	skyBox->draw(view, projection, skyBoxShader);
 
@@ -238,16 +262,16 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 	// add a global directional light in order to see the origin color of the material
 	directionalLight->sendLightToShader(shaderProgram);		
 	//directionalLight->getModel()->draw(view, projection, shaderProgram);
-
 	pointLight->sendLightToShader(shaderProgram);
 	pointLight->getModel()->draw(view, projection, shaderProgram);
-
 	//spotLight->sendLightToShader(shaderProgram);
 	//spotLight->getModel()->draw(view, projection, shaderProgram);
+
 
 	// Render the objects
 	currObj->draw(view, projection, shaderProgram);
 	
+	// Show editor panel, if selected
 	if (show_panel)
 	{
 		// Start the Dear ImGui frame
@@ -315,6 +339,7 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 	// Swap buffers.
 	glfwSwapBuffers(window);
 
+	// clean the xChange and yChange, important!!
 }
 
 void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -323,6 +348,8 @@ void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int a
 	 * TODO: Modify below to add your key callbacks.
 	 */
 	 // Check for a key press.
+	DisplayWindow* theWindow = static_cast<DisplayWindow*>(glfwGetWindowUserPointer(window));
+
 	if (action == GLFW_PRESS)
 	{
 		switch (key)
@@ -378,6 +405,14 @@ void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int a
 			break;
 		}
 	}
+	if (key >= 0 && key < 1024) {
+		if (action == GLFW_PRESS) {
+			theWindow->keys[key] = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			theWindow->keys[key] = false;
+		}
+	}
 }
 
 void DisplayWindow::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -411,6 +446,12 @@ void DisplayWindow::cursor_position_callback(GLFWwindow* window, double xpos, do
 	last_cursor_pos = cursor_pos;
 	cursor_pos.x = xpos;
 	cursor_pos.y = ypos;
+
+	xChange = cursor_pos.x - last_cursor_pos.x;
+	yChange = last_cursor_pos.y - cursor_pos.y;
+
+	camera->mouseControl(xChange, yChange);
+
 	if (is_rotating && !show_panel)
 	{
 		if (!light_rotating && !both_rotating)
