@@ -82,7 +82,7 @@ int main(void)
 	if (!DisplayWindow::initializeObjects())
 		exit(EXIT_FAILURE);
 
-
+	/* NOT NEEDED FOR PROJECT 3
 	// ------------ ImGUI part ----------------- 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -101,11 +101,12 @@ int main(void)
 
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	// ------------------------------------------
-
+	*/
 
 	// Loop while GLFW window should stay open.
 	while (!glfwWindowShouldClose(displayWindow))
 	{
+
 		// Main render display callback. Rendering of objects is done here. (Draw)
 		DisplayWindow::displayCallback(displayWindow);
 
@@ -114,10 +115,12 @@ int main(void)
 
 	}
 
+	/* NOT NEEDED FOR PROJECT 3
 	// Clean up ImGui 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+	*/
 
 	// destroy objects created
 	DisplayWindow::cleanUp();

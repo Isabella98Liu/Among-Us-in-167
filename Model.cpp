@@ -75,7 +75,7 @@ Model::Model(std::string objFilename)
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 
-	// Bind VBO to the bound VAO, and store the normal data
+	// Bind NBO to the bound VAO, and store the normal data
 	glBindBuffer(GL_ARRAY_BUFFER, NBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), normals.data(), GL_STATIC_DRAW);
 	// Enable Vertex Attribute 1 to pass normal data through to the shader

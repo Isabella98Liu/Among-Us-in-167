@@ -35,6 +35,6 @@ public:
 	void loadMap();
 	void draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader);
 
-	GLuint getID() { return textureID; }
+	GLuint getTexture() { return textureID; }
 };
 

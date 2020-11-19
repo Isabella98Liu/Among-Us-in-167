@@ -12,6 +12,7 @@
 #include "SpotLight.h"
 #include "SkyBox.h"
 #include "Camera.h"
+#include "Sphere.h"
 
 #include "CommonValues.h"
 
@@ -35,6 +36,7 @@ public:
 	static Model* bear;
 	static Model* bunny;
 	static Model* sandal;
+	static Sphere* discoBall;
 
 	// Light objects
 	static DirectionalLight* directionalLight;
@@ -50,6 +52,7 @@ public:
 	// Shader Program ID
 	static GLuint shaderProgram;
 	static GLuint skyBoxShader;
+	static GLuint envMapShader;
 
 	// SkyBox
 	static SkyBox* skyBox;

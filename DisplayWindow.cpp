@@ -23,7 +23,8 @@ SpotLight* DisplayWindow::spotLight;
 Model* DisplayWindow::bear;
 Model* DisplayWindow::bunny;
 Model* DisplayWindow::sandal;
-Model* currObj;
+Sphere* DisplayWindow::discoBall;
+BaseObject* currObj;
 
 // Key board input booleans
 bool is_rotating = false;
@@ -51,15 +52,18 @@ glm::mat4 DisplayWindow::projection;
 
 // View Matrix:
 Camera* DisplayWindow::camera;
-//glm::vec3 DisplayWindow::eyePos(0, 0, 20);			// Camera position.
 glm::mat4 DisplayWindow::view;
+/* NOT NEEDED FOR PROJECT 3
+//glm::vec3 DisplayWindow::eyePos(0, 0, 20);			// Camera position.
 //glm::vec3 DisplayWindow::lookAtPoint(0, 0, 0);		// The point we are looking at.
 //glm::vec3 DisplayWindow::upVector(0, 1, 0);		// The up direction of the camera.
 //glm::mat4 DisplayWindow::view = glm::lookAt(DisplayWindow::eyePos, DisplayWindow::lookAtPoint, DisplayWindow::upVector);
+*/
 
 // Shader Program ID
 GLuint DisplayWindow::shaderProgram; 
 GLuint DisplayWindow::skyBoxShader;
+GLuint DisplayWindow::envMapShader;
 
 // SkyBox
 SkyBox* DisplayWindow::skyBox;
@@ -78,7 +82,6 @@ vector<std::string> faces
 bool DisplayWindow::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	shaderProgram = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
-
 	// Check the shader program.
 	if (!shaderProgram)
 	{
@@ -88,11 +91,19 @@ bool DisplayWindow::initializeProgram() {
 
 	// Load shader for SkyBox
 	skyBoxShader = LoadShaders("shaders/SkyBox.vert", "shaders/SkyBox.frag");
-
 	// Check the shader program.
 	if (!skyBoxShader)
 	{
 		std::cerr << "Failed to initialize SkyBox shader program" << std::endl;
+		return false;
+	}
+
+	// Load shader for environment mapping
+	envMapShader = LoadShaders("shaders/EnvMapping.vert", "shaders/EnvMapping.frag");
+	// Check the shader program.
+	if (!envMapShader)
+	{
+		std::cerr << "Failed to load environment mapping shader program" << std::endl;
 		return false;
 	}
 
@@ -107,6 +118,9 @@ bool DisplayWindow::initializeObjects()
 	// Initialize a new Camera
 	camera = new Camera(glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f, 5.0f, 0.5f);
 
+	discoBall = new Sphere(20, 20, 10);
+
+	/* NOT NEEDED FOR PROJECT 3
 	// Initialize light objects
 	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 	//directionalLight->translateLightModel(glm::vec3(0.0f, 3.0f, 10.0f));
@@ -130,15 +144,16 @@ bool DisplayWindow::initializeObjects()
 	bunny->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.01f, glm::vec3(0.2f, 1.0f, 0.0f));
 	// diffuse + specular
 	sandal->setMaterial(glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.5f, 0.5f, 0.5f), 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
-
-	// Set bear to be the first to display and to be rotate
+	
 	currObj = bear;
+	*/
 
 	return true;
 }
 
 void DisplayWindow::cleanUp()
 {
+	/* NOT NEEDED FOR PEOJECT 3
 	// Deallcoate the objects.
 	delete bear;
 	delete bunny;
@@ -147,11 +162,16 @@ void DisplayWindow::cleanUp()
 	delete directionalLight;
 	delete pointLight;
 	delete spotLight;
+	*/
 
 	delete skyBox;
+	delete camera;
+	delete discoBall;
 
 	// Delete the shader program.
 	glDeleteProgram(shaderProgram);
+	glDeleteProgram(skyBoxShader);
+	glDeleteProgram(envMapShader);
 }
 
 GLFWwindow* DisplayWindow::createWindow(int width, int height)
@@ -230,8 +250,10 @@ void DisplayWindow::resizeCallback(GLFWwindow* window, int width, int height)
 
 void DisplayWindow::idleCallback()
 {
+	/* NOT NEEDED FOR PROJECT 3
 	// Perform any necessary updates here 
 	currObj->update();
+	*/
 }
 
 void DisplayWindow::displayCallback(GLFWwindow* window)
@@ -240,25 +262,27 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
 	// Calculate the deltatime
-	GLfloat currentTime = glfwGetTime();		// SDL_GetPerformanceCounter()
+	GLfloat currentTime = (GLfloat)glfwGetTime();		// SDL_GetPerformanceCounter()
 	deltaTime = currentTime - lastTime;			// (currentTime - lastTime) * 1000 / SDL_GetPerformancefrequency();
 	lastTime = currentTime;
 
 	camera->keyControl(keys, deltaTime);
 	
-
 	// Obtaint the latest Camera informaiton (direction and position)
 	view = camera->calculateViewMatrix();
-
-	// Render
-	glUseProgram(shaderProgram);
-	glUniform3fv(glGetUniformLocation(shaderProgram, "eyePosition"), 1, glm::value_ptr(camera->getPosition()));
-	glUseProgram(0);
 
 	// Render the Sky Box
 	skyBox->draw(view, projection, skyBoxShader);
 
-	// Render the light objects
+	// Render the disco ball using environment mapping
+	discoBall->draw(view, projection, envMapShader, skyBox->getTexture(), camera->getPosition());
+
+	/* NOT NEEDED FOR PEOJECT 3
+	// Render
+	glUseProgram(shaderProgram);
+	glUniform3fv(glGetUniformLocation(shaderProgram, "eyePosition"), 1, glm::value_ptr(camera->getPosition()));
+	glUseProgram(0);
+	//Render the light objects
 	// add a global directional light in order to see the origin color of the material
 	directionalLight->sendLightToShader(shaderProgram);		
 	//directionalLight->getModel()->draw(view, projection, shaderProgram);
@@ -267,10 +291,12 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 	//spotLight->sendLightToShader(shaderProgram);
 	//spotLight->getModel()->draw(view, projection, shaderProgram);
 
-
 	// Render the objects
 	currObj->draw(view, projection, shaderProgram);
-	
+
+	*/
+
+	/* NOT NEEDED FOR PROJECT 3
 	// Show editor panel, if selected
 	if (show_panel)
 	{
@@ -332,6 +358,7 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 		//glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
+	*/
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -339,7 +366,6 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 	// Swap buffers.
 	glfwSwapBuffers(window);
 
-	// clean the xChange and yChange, important!!
 }
 
 void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -358,7 +384,7 @@ void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int a
 			// Close the window. This causes the program to also terminate.
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
-
+		/* NOE NEEDED FOR PROJECT 3
 		// switch between the three external obj models
 		case GLFW_KEY_F1:
 			currObj = bear;
@@ -400,7 +426,8 @@ void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int a
 		case GLFW_KEY_C:
 			show_panel = !show_panel;
 			break;
-		
+		*/
+
 		default:
 			break;
 		}
@@ -417,6 +444,7 @@ void DisplayWindow::keyCallback(GLFWwindow* window, int key, int scancode, int a
 
 void DisplayWindow::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
+	/* NOT NEEDED FOR PROJECT 3
 	if (!light_scaling && !both_scaling)
 		currObj->resize(yoffset);
 	else if (light_scaling)
@@ -426,10 +454,12 @@ void DisplayWindow::scrollCallback(GLFWwindow* window, double xoffset, double yo
 		currObj->resize(yoffset);
 		pointLight->scaling(yoffset);
 	}
+	*/
 }
 
 void DisplayWindow::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+	/* NOT NEEDED FOR PROJECT 3
 	// rotating the model
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
@@ -439,19 +469,21 @@ void DisplayWindow::mouse_button_callback(GLFWwindow* window, int button, int ac
 	{
 		is_rotating = false;
 	}
+	*/
 }
 
 void DisplayWindow::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	last_cursor_pos = cursor_pos;
-	cursor_pos.x = xpos;
-	cursor_pos.y = ypos;
+	cursor_pos.x = (GLfloat)xpos;
+	cursor_pos.y = (GLfloat)ypos;
 
 	xChange = cursor_pos.x - last_cursor_pos.x;
 	yChange = last_cursor_pos.y - cursor_pos.y;
 
 	camera->mouseControl(xChange, yChange);
 
+	/* NOT NEEDED FOR PROJECT 3
 	if (is_rotating && !show_panel)
 	{
 		if (!light_rotating && !both_rotating)
@@ -464,6 +496,7 @@ void DisplayWindow::cursor_position_callback(GLFWwindow* window, double xpos, do
 			pointLight->rotate(ballMapping(last_cursor_pos), ballMapping(cursor_pos));
 		}
 	}
+	*/
 }
 
 glm::vec3 DisplayWindow::ballMapping(glm::vec2 point)
