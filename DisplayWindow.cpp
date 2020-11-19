@@ -118,8 +118,8 @@ bool DisplayWindow::initializeObjects()
 	// Initialize a new Camera
 	camera = new Camera(glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.0f, 5.0f, 0.5f);
 
-	discoBall = new Sphere(20, 20, 10);
-
+	//discoBall = new Sphere(20, 20, 10);
+	discoBall = new Sphere(24, 24, 5);
 	/* NOT NEEDED FOR PROJECT 3
 	// Initialize light objects
 	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
@@ -275,7 +275,9 @@ void DisplayWindow::displayCallback(GLFWwindow* window)
 	skyBox->draw(view, projection, skyBoxShader);
 
 	// Render the disco ball using environment mapping
-	discoBall->draw(view, projection, envMapShader, skyBox->getTexture(), camera->getPosition());
+	discoBall->useTexture(skyBox->getTexture());
+	discoBall->useShader(envMapShader);
+	discoBall->draw(camera->calculateViewMatrix(), projection, camera->getPosition());
 
 	/* NOT NEEDED FOR PEOJECT 3
 	// Render
