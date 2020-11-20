@@ -4,7 +4,7 @@ PointLight::PointLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 
 {
 	color = lightColor;
 	position = lightPos;
-	lightModel = new Model(objFilename);
+	lightModel = new Geometry(objFilename);
 
 	exponent = exp;
 	linear = lin;

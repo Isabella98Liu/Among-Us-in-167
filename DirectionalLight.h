@@ -1,18 +1,18 @@
 #pragma once
 #include "Light.h"
-#include "Model.h"
+#include "Geometry.h"
 
 class DirectionalLight : public Light
 {
 private:
 	glm::vec3 direction;	// direction of the directional light
-	Model* lightModel;		// the 3D visualized model for light
+	Geometry* lightModel;		// the 3D visualized model for light
 
 public:
 	DirectionalLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightDir);
 	~DirectionalLight();
 
-	Model* getModel() { return lightModel; };
+	Geometry* getModel() { return lightModel; };
 
 	void sendLightToShader(const int shaderID);
 	

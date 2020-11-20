@@ -14,19 +14,19 @@ void setup_callbacks(GLFWwindow* window)
 	glfwSetErrorCallback(error_callback);
 
 	// Set the window resize callback.
-	glfwSetWindowSizeCallback(window, DisplayWindow::resizeCallback);
+	glfwSetWindowSizeCallback(window, Window::resizeCallback);
 
 	// Set the key callback.
-	glfwSetKeyCallback(window, DisplayWindow::keyCallback);
+	glfwSetKeyCallback(window, Window::keyCallback);
 
 	// Set the scroll callback
-	glfwSetScrollCallback(window, DisplayWindow::scrollCallback);
+	glfwSetScrollCallback(window, Window::scrollCallback);
 
 	// Set mouse button callback
-	glfwSetMouseButtonCallback(window, DisplayWindow::mouse_button_callback);
+	glfwSetMouseButtonCallback(window, Window::mouse_button_callback);
 
 	// Set mouse cursor callback
-	glfwSetCursorPosCallback(window, DisplayWindow::cursor_position_callback);
+	glfwSetCursorPosCallback(window, Window::cursor_position_callback);
 }
 
 void setup_opengl_settings()
@@ -61,7 +61,7 @@ void print_versions()
 int main(void)
 {
 	// Create the GLFW window.
-	GLFWwindow* displayWindow = DisplayWindow::createWindow(640, 480);
+	GLFWwindow* displayWindow = Window::createWindow(640, 480);
 	if (!displayWindow)
 		exit(EXIT_FAILURE);
 
@@ -75,55 +75,27 @@ int main(void)
 	setup_opengl_settings();
 
 	// Initialize the shader program; exit if initialization fails.
-	if (!DisplayWindow::initializeProgram())
+	if (!Window::initializeProgram())
 		exit(EXIT_FAILURE);
 
 	// Initialize objects/pointers for rendering; exit if initialization fails.
-	if (!DisplayWindow::initializeObjects())
+	if (!Window::initializeObjects())
 		exit(EXIT_FAILURE);
-
-	/* NOT NEEDED FOR PROJECT 3
-	// ------------ ImGUI part ----------------- 
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-
-	// Setup Dear ImGui style
-	ImGui::StyleColorsClassic();
-
-	// Setup Platform/Renderer bindings
-	ImGui_ImplGlfw_InitForOpenGL(displayWindow, true);
-	// GL 3.0 + GLSL 130
-	const char* glsl_version = "#version 130";
-	ImGui_ImplOpenGL3_Init(glsl_version);
-
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-	// ------------------------------------------
-	*/
 
 	// Loop while GLFW window should stay open.
 	while (!glfwWindowShouldClose(displayWindow))
 	{
 
 		// Main render display callback. Rendering of objects is done here. (Draw)
-		DisplayWindow::displayCallback(displayWindow);
+		Window::displayCallback(displayWindow);
 
 		// Idle callback. Updating objects, etc. can be done here. (Update)
-		DisplayWindow::idleCallback();
+		Window::idleCallback();
 
 	}
 
-	/* NOT NEEDED FOR PROJECT 3
-	// Clean up ImGui 
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
-	*/
-
 	// destroy objects created
-	DisplayWindow::cleanUp();
+	Window::cleanUp();
 
 	// Destroy the window.
 	glfwDestroyWindow(displayWindow);

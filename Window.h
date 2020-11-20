@@ -5,8 +5,7 @@
 #include "shader.h"
 #include "BaseObject.h"
 #include "Cube.h"
-#include "PointCloud.h"
-#include "Model.h"
+#include "Geometry.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
 #include "SpotLight.h"
@@ -20,7 +19,7 @@
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_opengl3.h"
 
-class DisplayWindow
+class Window
 {
 public:
 
@@ -33,9 +32,6 @@ public:
 	static glm::vec2 cursor_pos;
 
 	// Objects to Render
-	static Model* bear;
-	static Model* bunny;
-	static Model* sandal;
 	static Sphere* discoBall;
 
 	// Light objects
@@ -47,10 +43,10 @@ public:
 	static Camera* camera;
 	static glm::mat4 projection;
 	static glm::mat4 view;
-	static glm::vec3 eyePos, lookAtPoint, upVector;
+	static glm::vec3 eyePos;
 
 	// Shader Program ID
-	static GLuint shaderProgram;
+	static GLuint objectShader;
 	static GLuint skyBoxShader;
 	static GLuint envMapShader;
 
@@ -81,9 +77,6 @@ public:
 	static void readVec3(float* f, glm::vec3 vector) { f[0] = vector.x; f[1] = vector.y; f[2] = vector.z;}
 	
 	bool* getKeys() { return keys; }
-	GLfloat getXChange() { return cursor_pos.x - last_cursor_pos.x; }
-	GLfloat getYChange() { return cursor_pos.y - last_cursor_pos.y; }
-
 };
 
 #endif

@@ -6,7 +6,7 @@ SpotLight::SpotLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 li
 	position = lightPos;
 	direction = lightDir;
 
-	lightModel = new Model(objFilename);
+	lightModel = new Geometry(objFilename);
 
 	exponent = exp;
 	linear = lin;

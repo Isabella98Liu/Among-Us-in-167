@@ -4,7 +4,7 @@ DirectionalLight::DirectionalLight(std::string objFilename, glm::vec3 lightColor
 {
 	color = lightColor;
 	direction = lightDir;
-	lightModel = new Model(objFilename);
+	lightModel = new Geometry(objFilename);
 
 	// resize the model to fit in 1/4 inch of the screen
 	glm::mat4 model = lightModel->getModel();

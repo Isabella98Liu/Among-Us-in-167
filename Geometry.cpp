@@ -1,6 +1,6 @@
-#include "Model.h"
+#include "Geometry.h"
 
-Model::Model(std::string objFilename)
+Geometry::Geometry(std::string objFilename)
 {
 	// Read obj data from file
 	std::ifstream objFile(objFilename);
@@ -48,18 +48,6 @@ Model::Model(std::string objFilename)
 	// Normalize the object to fit in the screen
 	normalize();
 	
-	// Set the color of the model (red) 
-	color = glm::vec3(1.0f, 0.0f, 0.0f);
-
-	// Temporarily set the light color (white) and its position
-	lightColor = glm::vec3(1.0f, 1.0f, 0.0f);
-	lightPos = glm::vec3(0.0f, 20.0f, 10.0f);
-
-	// Default normal mapping mode set to false
-	normalShadding = false;
-
-	// Set the base material of the model (yellow rubber)
-	material = new Material(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 0.25f, glm::vec3(1.0f, 1.0f, 1.0f));
 	// Generate a Vertex Array and Vertex Buffer Object
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -92,7 +80,7 @@ Model::Model(std::string objFilename)
 	glBindVertexArray(0);
 }
 
-Model::~Model()
+Geometry::~Geometry()
 {
 	// Delete the VBO/VEO and VAO
 	glDeleteBuffers(1, &VBO);
@@ -101,21 +89,15 @@ Model::~Model()
 	glDeleteVertexArrays(1, &VAO);
 }
 
-void Model::draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader)
+void Geometry::draw(GLuint shaderProgram, glm::mat4 C, glm::mat4 projection)
 {
 	// Actiavte the shader program 
-	glUseProgram(shader);
+	glUseProgram(shaderProgram);
 
 	// Get the shader variable locations and send the uniform data to the shader 
-	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, false, glm::value_ptr(view));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, false, glm::value_ptr(projection));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-	// Send material variable to shader
-	material->sendMatToShader(shader);
-
-	// Send normal mapping information to the shader
-	glUniform1i(glGetUniformLocation(shader, "normalShadding"), normalShadding);
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, false, glm::value_ptr(C));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, false, glm::value_ptr(projection));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 	// Bind the VAO
 	glBindVertexArray(VAO);
@@ -128,19 +110,18 @@ void Model::draw(const glm::mat4& view, const glm::mat4& projection, GLuint shad
 	glUseProgram(0);
 }
 
-void Model::update()
+void Geometry::update(glm::mat4 C)
 {
-	// Spin the cube by 1 degree
-	//spin(0.1f);
+
 }
 
-void Model::spin(float deg)
+void Geometry::spin(float deg)
 {
 	// Update the model matrix by multiplying a rotation matrix
 	model = glm::rotate(glm::radians(deg), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
 }
 
-void Model::normalize()
+void Geometry::normalize()
 {
 	glm::vec3 points_max = vertices[0];
 	glm::vec3 points_min = vertices[0];
@@ -180,27 +161,17 @@ void Model::normalize()
 	model = glm::scale(glm::vec3(scale_factor, scale_factor, scale_factor)) * model;
 }
 
-void Model::resize(double offset)
+void Geometry::resize(double offset)
 {
 	model = glm::scale(glm::vec3(1.0f + offset * 0.02f)) * model;
 }
 
-void Model::rotate(glm::vec3 start, glm::vec3 end)
+void Geometry::rotate(glm::vec3 start, glm::vec3 end)
 {
 	model = glm::rotate(0.02f, glm::cross(start, end)) * model;
 }
 
-void Model::translate(glm::vec3 translation)
+void Geometry::translate(glm::vec3 translation)
 {
 	model = glm::translate(translation) * model;
-}
-
-void Model::setMaterial(glm::vec3 ambientFactor, glm::vec3 diffuseFactor, glm::vec3 specularFactor, GLfloat shine, glm::vec3 color)
-{
-	material->setMaterial(ambientFactor, diffuseFactor, specularFactor, shine, color);
-}
-
-void Model::setNormalShadding()
-{
-	normalShadding = !normalShadding;
 }

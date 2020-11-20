@@ -8,7 +8,7 @@ private:
 	glm::vec3 position;		// position of the point light
 	glm::vec3 direction;	// direction of the spot light
 
-	Model* lightModel;
+	Geometry* lightModel;
 
 	GLfloat exponent, linear, constant;
 	GLfloat angle;
@@ -17,7 +17,7 @@ public:
 	SpotLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 lightDir, GLfloat exp, GLfloat lin, GLfloat con, GLfloat ang);
 	~SpotLight();
 
-	Model* getModel() { return lightModel; }
+	Geometry* getModel() { return lightModel; }
 
 	void sendLightToShader(const int shaderID);
 

@@ -115,15 +115,15 @@
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="packages\glm.0.9.9.800\build\native\include\glm\detail\glm.cpp" />
-    <ClCompile Include="PointCloud.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="shader.cpp" />
-    <ClCompile Include="DisplayWindow.cpp" />
+    <ClCompile Include="Window.cpp" />
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="SpotLight.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -141,8 +141,9 @@
     <ClInclude Include="Light.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Material.h" />
-    <ClInclude Include="Model.h" />
+    <ClInclude Include="Geometry.h" />
     <ClInclude Include="BaseObject.h" />
+    <ClInclude Include="Node.h" />
     <ClInclude Include="packages\glm.0.9.9.800\build\native\include\glm\common.hpp" />
     <ClInclude Include="packages\glm.0.9.9.800\build\native\include\glm\detail\compute_common.hpp" />
     <ClInclude Include="packages\glm.0.9.9.800\build\native\include\glm\detail\compute_vector_relational.hpp" />
@@ -434,14 +435,14 @@
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\glut.h" />
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\glxew.h" />
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\wglew.h" />
-    <ClInclude Include="PointCloud.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="shader.h" />
-    <ClInclude Include="DisplayWindow.h" />
+    <ClInclude Include="Window.h" />
     <ClInclude Include="SkyBox.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="SpotLight.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
