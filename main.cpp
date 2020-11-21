@@ -61,15 +61,15 @@ void print_versions()
 int main(void)
 {
 	// Create the GLFW window.
-	GLFWwindow* displayWindow = Window::createWindow(640, 480);
-	if (!displayWindow)
+	GLFWwindow* window = Window::createWindow(640, 480);
+	if (!window)
 		exit(EXIT_FAILURE);
 
 	// Print OpenGL and GLSL versions.
 	print_versions();
 
 	// Setup callbacks.
-	setup_callbacks(displayWindow);
+	setup_callbacks(window);
 
 	// Setup OpenGL settings.
 	setup_opengl_settings();
@@ -83,11 +83,10 @@ int main(void)
 		exit(EXIT_FAILURE);
 
 	// Loop while GLFW window should stay open.
-	while (!glfwWindowShouldClose(displayWindow))
+	while (!glfwWindowShouldClose(window))
 	{
-
 		// Main render display callback. Rendering of objects is done here. (Draw)
-		Window::displayCallback(displayWindow);
+		Window::displayCallback(window);
 
 		// Idle callback. Updating objects, etc. can be done here. (Update)
 		Window::idleCallback();
@@ -98,7 +97,7 @@ int main(void)
 	Window::cleanUp();
 
 	// Destroy the window.
-	glfwDestroyWindow(displayWindow);
+	glfwDestroyWindow(window);
 
 	// Terminate GLFW.
 	glfwTerminate();

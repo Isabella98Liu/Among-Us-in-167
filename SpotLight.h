@@ -1,6 +1,6 @@
 #pragma once
 #include "Light.h"
-#include "Model.h"
+#include "Geometry.h"
 
 class SpotLight : public Light
 {

@@ -16,8 +16,8 @@ public:
     Transform();
     ~Transform();
 
-    void draw(GLuint shaderProgram, glm::mat4 C, glm::mat4 projection);
-    void update(glm::mat4 C) = 0;
+    void draw(GLuint shaderProgram, glm::mat4 C);
+    void update(glm::mat4 C);
 
     void addChild(Node* child);
 

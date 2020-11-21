@@ -23,6 +23,14 @@ SpotLight* Window::spotLight;
 Sphere* Window::discoBall;
 BaseObject* currObj;
 
+// Objects on Scene Graph
+Transform* projectionTransform;
+Transform* viewTransform;
+Transform* worldTransform;
+Transform* carrousel2World;
+Geometry* carrouseRoof;
+Geometry* carrousePillar;
+
 // Camera Matrices 
 Camera* Window::camera;
 glm::mat4 Window::view;
@@ -50,11 +58,11 @@ vector<std::string> faces
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
-	objectShader = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
+	objectShader = LoadShaders("shaders/BaseObject.vert", "shaders/BaseObject.frag");
 	// Check the shader program.
 	if (!objectShader)
 	{
-		std::cerr << "Failed to initialize shader program" << std::endl;
+		std::cerr << "Failed to initialize BaseObject shader program" << std::endl;
 		return false;
 	}
 
@@ -72,7 +80,7 @@ bool Window::initializeProgram() {
 	// Check the shader program.
 	if (!envMapShader)
 	{
-		std::cerr << "Failed to load environment mapping shader program" << std::endl;
+		std::cerr << "Failed to load EnvMapping shader program" << std::endl;
 		return false;
 	}
 
@@ -91,6 +99,24 @@ bool Window::initializeObjects()
 
 	discoBall = new Sphere(24, 24, 5);
 
+	// Initialize Transforms
+	projectionTransform = new Transform();
+	viewTransform = new Transform();
+	worldTransform = new Transform();
+	carrousel2World = new Transform();
+
+	worldTransform->addChild(projectionTransform);
+	projectionTransform->addChild(viewTransform);
+	viewTransform->addChild(carrousel2World);
+
+	// Initialize Geometries
+	carrouseRoof = new Geometry("Models/torus_hr.obj");
+	carrousePillar = new Geometry("Models/cylinder.obj");
+	viewTransform->addChild(carrouseRoof);
+	viewTransform->addChild(carrousePillar);
+
+	// test---- update the geometry size
+	carrousePillar->rescale(glm::vec3(0.5f, 1.5f, 1.0f));
 
 	return true;
 }
@@ -184,8 +210,8 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-	// Perform any necessary updates here 
-	currObj->update();
+	projectionTransform->update(projection);
+	viewTransform->update(view);
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -199,7 +225,7 @@ void Window::displayCallback(GLFWwindow* window)
 	lastTime = currentTime;
 
 	camera->keyControl(keys, deltaTime);
-	
+
 	// Obtaint the latest Camera informaiton (direction and position)
 	view = camera->calculateViewMatrix();
 	eyePos = camera->getPosition();
@@ -207,11 +233,13 @@ void Window::displayCallback(GLFWwindow* window)
 	// Render the Sky Box
 	skyBox->draw(view, projection, skyBoxShader);
 
-	// Render the disco ball using environment mapping
-	discoBall->useTexture(skyBox->getTexture());
-	discoBall->useShader(envMapShader);
-	discoBall->draw(view, projection, eyePos);
-
+	//// Render the disco ball using environment mapping
+	//discoBall->useTexture(skyBox->getTexture());
+	//discoBall->useShader(envMapShader);
+	//discoBall->draw(view, projection, eyePos);
+	
+	// Render the Scene Graph Tree
+	worldTransform->draw(objectShader, glm::mat4(1));
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();

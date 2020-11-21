@@ -89,14 +89,13 @@ Geometry::~Geometry()
 	glDeleteVertexArrays(1, &VAO);
 }
 
-void Geometry::draw(GLuint shaderProgram, glm::mat4 C, glm::mat4 projection)
+void Geometry::draw(GLuint shaderProgram, glm::mat4 C)
 {
 	// Actiavte the shader program 
 	glUseProgram(shaderProgram);
 
 	// Get the shader variable locations and send the uniform data to the shader 
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, false, glm::value_ptr(C));
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, false, glm::value_ptr(projection));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "PV"), 1, false, glm::value_ptr(C));
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 	// Bind the VAO
@@ -164,6 +163,11 @@ void Geometry::normalize()
 void Geometry::resize(double offset)
 {
 	model = glm::scale(glm::vec3(1.0f + offset * 0.02f)) * model;
+}
+
+void Geometry::rescale(glm::vec3 scale)
+{
+	model = glm::scale(scale) * model;
 }
 
 void Geometry::rotate(glm::vec3 start, glm::vec3 end)

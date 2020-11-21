@@ -5,13 +5,16 @@
 #include "shader.h"
 #include "BaseObject.h"
 #include "Cube.h"
-#include "Geometry.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "SkyBox.h"
 #include "Camera.h"
 #include "Sphere.h"
+
+#include "Node.h"
+#include "Transform.h"
+#include "Geometry.h"
 
 #include "CommonValues.h"
 

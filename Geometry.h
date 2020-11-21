@@ -26,12 +26,13 @@ public:
     Geometry(std::string objFilename);
     ~Geometry();
 
-    void draw(GLuint shaderProgram, glm::mat4 C, glm::mat4 projection);
+    void draw(GLuint shaderProgram, glm::mat4 C);
     void update(glm::mat4 C);
 
     void spin(float deg);
     void normalize();
     void resize(double offset);
+    void rescale(glm::vec3 scale);
     void rotate(glm::vec3 start, glm::vec3 end);
     void translate(glm::vec3 translation);
 
