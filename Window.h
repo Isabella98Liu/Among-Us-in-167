@@ -77,9 +77,10 @@ public:
 
 	static glm::vec3 ballMapping(glm::vec2 start);
 
-	static void readVec3(float* f, glm::vec3 vector) { f[0] = vector.x; f[1] = vector.y; f[2] = vector.z;}
-	
+	static Transform* initializeCarrousel();
+
 	bool* getKeys() { return keys; }
+	static void readVec3(float* f, glm::vec3 vector) { f[0] = vector.x; f[1] = vector.y; f[2] = vector.z;}
 };
 
 #endif

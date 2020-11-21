@@ -23,13 +23,10 @@ SpotLight* Window::spotLight;
 Sphere* Window::discoBall;
 BaseObject* currObj;
 
-// Objects on Scene Graph
+// Scene Graph
+Transform* worldTransform;
 Transform* projectionTransform;
 Transform* viewTransform;
-Transform* worldTransform;
-Transform* carrousel2World;
-Geometry* carrouseRoof;
-Geometry* carrousePillar;
 
 // Camera Matrices 
 Camera* Window::camera;
@@ -93,30 +90,26 @@ bool Window::initializeObjects()
 	skyBox = new SkyBox(faces);
 
 	// Initialize a new Camera
-	camera = new Camera(glm::vec3(0.0f, 0.0f, 20.0f), 
+	camera = new Camera(glm::vec3(0.0f, 0.0f, 80.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f), 
 						0.0f, 0.0f, 5.0f, 0.5f);
 
 	discoBall = new Sphere(24, 24, 5);
 
-	// Initialize Transforms
-	projectionTransform = new Transform();
-	viewTransform = new Transform();
+	// L1
 	worldTransform = new Transform();
-	carrousel2World = new Transform();
 
+	// L2
+	projectionTransform = new Transform();
 	worldTransform->addChild(projectionTransform);
+
+	// L3
+	viewTransform = new Transform();
 	projectionTransform->addChild(viewTransform);
-	viewTransform->addChild(carrousel2World);
 
-	// Initialize Geometries
-	carrouseRoof = new Geometry("Models/torus_hr.obj");
-	carrousePillar = new Geometry("Models/cylinder.obj");
-	viewTransform->addChild(carrouseRoof);
-	viewTransform->addChild(carrousePillar);
-
-	// test---- update the geometry size
-	carrousePillar->rescale(glm::vec3(0.5f, 1.5f, 1.0f));
+	// Initialize carrousel transform
+	Transform* carrousel2world = initializeCarrousel();
+	viewTransform->addChild(carrousel2world);
 
 	return true;
 }
@@ -210,8 +203,8 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-	projectionTransform->update(projection);
-	viewTransform->update(view);
+	projectionTransform->setTransform(projection);
+	viewTransform->setTransform(view);
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -311,4 +304,51 @@ glm::vec3 Window::ballMapping(glm::vec2 point)
 	pos.z = glm::sqrt(1.0f - d*d);
 	pos = glm::normalize(pos);
 	return pos;
+}
+
+Transform* Window::initializeCarrousel()
+{
+	// L1 (Trans carrousel2World + Geo Roof + Geo pillar)
+	Transform* carrousel2World = new Transform();
+	Geometry* Roof = new Geometry("Models/cone.obj");
+	Geometry* Pillar = new Geometry("Models/cylinder.obj");
+	carrousel2World->addChild(Roof);
+	carrousel2World->addChild(Pillar);
+	// Adjust
+	Roof->rescale(glm::vec3(2.5f, 0.6f, 2.5f));
+	Pillar->rescale(glm::vec3(0.3f, 2.5f, 0.3f));
+	Roof->translate(glm::vec3(0.0f, 15.0f, 0.0f));
+
+	// L2 (Trans suspension2Carrousel + Geo suspension)
+	int suspensionCount = 6;
+	int radius = 15.0f;
+	std::vector<Transform*> suspension2Carrousels;
+	for (int i = 0; i < suspensionCount; i++)
+	{
+		Transform* suspension2Carrousel = new Transform();
+		Geometry* suspension = new Geometry("Models/cylinder.obj");
+		suspension2Carrousel->addChild(suspension);
+		suspension->rescale(glm::vec3(0.1f, 1.5f, 0.1f));
+
+		double sinx = sin(i * 2 * glm::pi<double>() / suspensionCount);
+		double cosx = cos(i * 2 * glm::pi<double>() / suspensionCount);
+		suspension2Carrousel->update(glm::translate(glm::vec3(sinx * radius, 0.0f, cosx * radius)));
+
+		suspension2Carrousels.push_back(suspension2Carrousel);
+	}
+	carrousel2World->addChilds(suspension2Carrousels);
+
+	// L3 (Trans rabbit2Suspension + Geo rabbit)
+	for (int i = 0; i < suspension2Carrousels.size(); i++)
+	{
+		Transform* rabbit2Suspension = new Transform();
+		Geometry* rabbit = new Geometry("Models/bunny.obj");
+		rabbit2Suspension->addChild(rabbit);
+		rabbit->rescale(glm::vec3(0.5f, 0.5f, 0.5f));
+
+		suspension2Carrousels[i]->addChild(rabbit2Suspension);
+	}
+
+
+	return carrousel2World;
 }
