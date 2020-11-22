@@ -27,6 +27,16 @@ BaseObject* currObj;
 Transform* worldTransform;
 Transform* projectionTransform;
 Transform* viewTransform;
+Transform* carrousel2World;
+std::vector<Transform*> suspension2Carrousels;
+std::vector<Transform*> rabbit2Suspensions;
+GLfloat suspensionMoveOffset = 0.0f;
+GLfloat suspensionMoveEdge = 1.0f;
+GLint suspensionMoveDirection = 1;
+
+// Materials and Lights
+Material* basicMaterial;
+DirectionalLight* directionalLight;
 
 // Camera Matrices 
 Camera* Window::camera;
@@ -86,6 +96,11 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
+	// Initialize materials and lights
+	basicMaterial = new Material(glm::vec3(0.1745f, 0.01175f, 0.01175f), glm::vec3(0.61424f, 0.04136f, 0.04136f),
+		glm::vec3(0.727811f, 0.626959f, 0.626959f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f));
+	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
 	// Initialize skybox objects
 	skyBox = new SkyBox(faces);
 
@@ -108,8 +123,11 @@ bool Window::initializeObjects()
 	projectionTransform->addChild(viewTransform);
 
 	// Initialize carrousel transform
-	Transform* carrousel2world = initializeCarrousel();
-	viewTransform->addChild(carrousel2world);
+	initializeCarrousel();
+	viewTransform->addChild(carrousel2World);
+
+	//Transform* ground2World = initializeGround();
+	//viewTransform->addChild(ground2World);
 
 	return true;
 }
@@ -205,6 +223,26 @@ void Window::idleCallback()
 {
 	projectionTransform->setTransform(projection);
 	viewTransform->setTransform(view);
+
+	// L1 animation: carrousel rotate around its vertical axis
+	carrousel2World->update(glm::rotate(2.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)));
+	// L2 animation: suspensions move up and down
+	if (deltaTime > 1.0f) return;	// first load produce large deltaTime, discard, to be revised in the future
+	suspensionMoveOffset += deltaTime * suspensionMoveDirection;
+	if (suspensionMoveOffset > suspensionMoveEdge || suspensionMoveOffset < -suspensionMoveEdge)
+		suspensionMoveDirection = (-1) * suspensionMoveDirection;
+	for (int i = 0; i < suspension2Carrousels.size(); i++)
+	{
+		int direction = ((i % 2) * 2 - 1) * suspensionMoveDirection;
+		suspension2Carrousels[i]->update(glm::translate(glm::vec3(0.0f, direction * deltaTime * 1.6f, 0.0f)));
+	}
+	// L3 animation: rabbit moves around its own vertival axis
+	for (int i = 0; i < rabbit2Suspensions.size(); i++)
+	{
+		int direction = ((i % 2) * 2 - 1) * suspensionMoveDirection;
+		rabbit2Suspensions[i]->update(glm::rotate(direction * deltaTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)));
+	}
+
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -225,6 +263,9 @@ void Window::displayCallback(GLFWwindow* window)
 
 	// Render the Sky Box
 	skyBox->draw(view, projection, skyBoxShader);
+
+	basicMaterial->sendMatToShader(objectShader);
+	directionalLight->sendLightToShader(objectShader);
 
 	//// Render the disco ball using environment mapping
 	//discoBall->useTexture(skyBox->getTexture());
@@ -309,26 +350,26 @@ glm::vec3 Window::ballMapping(glm::vec2 point)
 Transform* Window::initializeCarrousel()
 {
 	// L1 (Trans carrousel2World + Geo Roof + Geo pillar)
-	Transform* carrousel2World = new Transform();
+	carrousel2World = new Transform();
 	Geometry* Roof = new Geometry("Models/cone.obj");
 	Geometry* Pillar = new Geometry("Models/cylinder.obj");
 	carrousel2World->addChild(Roof);
 	carrousel2World->addChild(Pillar);
 	// Adjust
-	Roof->rescale(glm::vec3(2.5f, 0.6f, 2.5f));
+	Roof->rescale(glm::vec3(3.0f, 0.6f, 3.0f));
 	Pillar->rescale(glm::vec3(0.3f, 2.5f, 0.3f));
 	Roof->translate(glm::vec3(0.0f, 15.0f, 0.0f));
 
 	// L2 (Trans suspension2Carrousel + Geo suspension)
 	int suspensionCount = 6;
 	int radius = 15.0f;
-	std::vector<Transform*> suspension2Carrousels;
+	//std::vector<Transform*> suspension2Carrousels;
 	for (int i = 0; i < suspensionCount; i++)
 	{
 		Transform* suspension2Carrousel = new Transform();
 		Geometry* suspension = new Geometry("Models/cylinder.obj");
 		suspension2Carrousel->addChild(suspension);
-		suspension->rescale(glm::vec3(0.1f, 1.5f, 0.1f));
+		suspension->rescale(glm::vec3(0.08f, 1.7f, 0.08f));
 
 		double sinx = sin(i * 2 * glm::pi<double>() / suspensionCount);
 		double cosx = cos(i * 2 * glm::pi<double>() / suspensionCount);
@@ -346,9 +387,24 @@ Transform* Window::initializeCarrousel()
 		rabbit2Suspension->addChild(rabbit);
 		rabbit->rescale(glm::vec3(0.5f, 0.5f, 0.5f));
 
+		rabbit2Suspension->update(glm::translate(glm::vec3(0.0f, -2.5f, 0.0f)));
+
+		rabbit2Suspensions.push_back(rabbit2Suspension);
 		suspension2Carrousels[i]->addChild(rabbit2Suspension);
 	}
 
 
 	return carrousel2World;
+}
+
+Transform* Window::initializeGround()
+{
+	Transform* ground2World = new Transform();
+	Geometry* Ground = new Geometry("Models/cube.obj");
+	ground2World->addChild(Ground);
+
+	Ground->rescale(glm::vec3(100.0f, 0.1f, 100.0f));
+	Ground->translate(glm::vec3(0.0f, -20.0f, 0.0f));
+	
+	return ground2World;
 }

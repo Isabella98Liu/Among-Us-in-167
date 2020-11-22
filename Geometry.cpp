@@ -111,7 +111,7 @@ void Geometry::draw(GLuint shaderProgram, glm::mat4 C)
 
 void Geometry::update(glm::mat4 C)
 {
-
+	model = C * model;
 }
 
 void Geometry::spin(float deg)

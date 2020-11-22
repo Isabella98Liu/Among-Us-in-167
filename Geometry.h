@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Node.h"
+#include "Material.h"
 
 #include <string>
 #include <fstream>
@@ -22,6 +23,7 @@ private:
 
     glm::mat4 model = glm::mat4(1);
 
+
 public:
     Geometry(std::string objFilename);
     ~Geometry();
@@ -38,6 +40,5 @@ public:
 
     glm::mat4 getModel() { return model; }
     void setModel(glm::mat4 m) { model = m; }
-
 };
 

@@ -23,6 +23,10 @@ void Transform::draw(GLuint shaderProgram, glm::mat4 C)
 void Transform::update(glm::mat4 C)
 {
 	MT = C * MT;
+	//for (int i = 0; i < childs.size(); i++)	// loop through each child and call update
+	//{
+	//	childs[i]->update(C);
+	//}
 }
 
 void Transform::addChild(Node* child)

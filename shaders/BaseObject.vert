@@ -7,10 +7,12 @@ uniform mat4 PV;	// projection * view
 uniform mat4 model;
 
 out vec3 fragPos;
+out vec3 fragNormal;
 
 void main()
 {
 	gl_Position = PV * model * vec4(position, 1.0);
 	
 	fragPos = (model * vec4(position, 1.0)).xyz;
+	fragNormal = mat3(transpose(inverse(model))) * normal;
 }
