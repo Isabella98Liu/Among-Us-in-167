@@ -19,10 +19,6 @@ DirectionalLight* Window::directionalLight;
 PointLight* Window::pointLight;
 SpotLight* Window::spotLight;
 
-// Objects to Render
-Sphere* Window::discoBall;
-BaseObject* currObj;
-
 // Scene Graph
 Transform* worldTransform;
 Transform* projectionTransform;
@@ -33,6 +29,9 @@ std::vector<Transform*> rabbit2Suspensions;
 GLfloat suspensionMoveOffset = 0.0f;
 GLfloat suspensionMoveEdge = 1.0f;
 GLint suspensionMoveDirection = 1;
+GLboolean is_animate_l1 = true;
+GLboolean is_animate_l2 = true;
+GLboolean is_animate_l3 = true;
 
 // Materials and Lights
 Material* basicMaterial;
@@ -97,9 +96,9 @@ bool Window::initializeProgram() {
 bool Window::initializeObjects()
 {
 	// Initialize materials and lights
-	basicMaterial = new Material(glm::vec3(0.1745f, 0.01175f, 0.01175f), glm::vec3(0.61424f, 0.04136f, 0.04136f),
-		glm::vec3(0.727811f, 0.626959f, 0.626959f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f));
-	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+	basicMaterial = new Material(glm::vec3(0.0215f, 0.1745f, 0.0215f), glm::vec3(0.07568f, 0.61424f, 0.07568f),
+		glm::vec3(0.633f, 0.727811f, 0.633f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f));
+	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	// Initialize skybox objects
 	skyBox = new SkyBox(faces);
@@ -109,25 +108,23 @@ bool Window::initializeObjects()
 						glm::vec3(0.0f, 1.0f, 0.0f), 
 						0.0f, 0.0f, 5.0f, 0.5f);
 
-	discoBall = new Sphere(24, 24, 5);
-
-	// L1
 	worldTransform = new Transform();
-
-	// L2
-	projectionTransform = new Transform();
-	worldTransform->addChild(projectionTransform);
-
-	// L3
-	viewTransform = new Transform();
-	projectionTransform->addChild(viewTransform);
 
 	// Initialize carrousel transform
 	initializeCarrousel();
-	viewTransform->addChild(carrousel2World);
+	worldTransform->addChild(carrousel2World);
+
+	// Add disco ball transform
+	Transform* disco2World = new Transform();
+	Sphere* discoBall = new Sphere(24, 24, 5);
+	discoBall->useTexture(skyBox->getTexture());
+	discoBall->useShader(envMapShader);
+	disco2World->addChild(discoBall);
+	disco2World->update(glm::translate(glm::vec3(0.0f, 25.0f, 0.0f)));
+	worldTransform->addChild(disco2World);
 
 	//Transform* ground2World = initializeGround();
-	//viewTransform->addChild(ground2World);
+	//worldTransform->addChild(ground2World);
 
 	return true;
 }
@@ -137,7 +134,6 @@ void Window::cleanUp()
 	// Delete Objects
 	delete skyBox;
 	delete camera;
-	delete discoBall;
 
 	// Delete the shader program.
 	glDeleteProgram(objectShader);
@@ -221,28 +217,43 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-	projectionTransform->setTransform(projection);
-	viewTransform->setTransform(view);
+	glUseProgram(objectShader);
+	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(eyePos));
+	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection * view));
+	glUseProgram(0);
+
+	glUseProgram(envMapShader);
+	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(eyePos));
+	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection * view));
+	glUseProgram(0);
 
 	// L1 animation: carrousel rotate around its vertical axis
-	carrousel2World->update(glm::rotate(2.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)));
-	// L2 animation: suspensions move up and down
+	if (is_animate_l1)
+	{
+		carrousel2World->update(glm::rotate(2.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)));
+	}
 	if (deltaTime > 1.0f) return;	// first load produce large deltaTime, discard, to be revised in the future
 	suspensionMoveOffset += deltaTime * suspensionMoveDirection;
 	if (suspensionMoveOffset > suspensionMoveEdge || suspensionMoveOffset < -suspensionMoveEdge)
 		suspensionMoveDirection = (-1) * suspensionMoveDirection;
-	for (int i = 0; i < suspension2Carrousels.size(); i++)
+	// L2 animation: suspensions move up and down
+	if (is_animate_l2)
 	{
-		int direction = ((i % 2) * 2 - 1) * suspensionMoveDirection;
-		suspension2Carrousels[i]->update(glm::translate(glm::vec3(0.0f, direction * deltaTime * 1.6f, 0.0f)));
+		for (int i = 0; i < suspension2Carrousels.size(); i++)
+		{
+			int direction = ((i % 2) * 2 - 1) * suspensionMoveDirection;
+			suspension2Carrousels[i]->update(glm::translate(glm::vec3(0.0f, direction * deltaTime * 1.6f, 0.0f)));
+		}
 	}
 	// L3 animation: rabbit moves around its own vertival axis
-	for (int i = 0; i < rabbit2Suspensions.size(); i++)
+	if (is_animate_l3)
 	{
-		int direction = ((i % 2) * 2 - 1) * suspensionMoveDirection;
-		rabbit2Suspensions[i]->update(glm::rotate(direction * deltaTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)));
+		for (int i = 0; i < rabbit2Suspensions.size(); i++)
+		{
+			int direction = ((i % 2) * 2 - 1) * suspensionMoveDirection;
+			rabbit2Suspensions[i]->update(glm::rotate(direction * deltaTime * 2.0f, glm::vec3(0.0f, 1.0f, 0.0f)));
+		}
 	}
-
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -266,14 +277,9 @@ void Window::displayCallback(GLFWwindow* window)
 
 	basicMaterial->sendMatToShader(objectShader);
 	directionalLight->sendLightToShader(objectShader);
-
-	//// Render the disco ball using environment mapping
-	//discoBall->useTexture(skyBox->getTexture());
-	//discoBall->useShader(envMapShader);
-	//discoBall->draw(view, projection, eyePos);
 	
 	// Render the Scene Graph Tree
-	worldTransform->draw(objectShader, glm::mat4(1));
+	worldTransform->draw(glm::mat4(1));
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -297,6 +303,18 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 				case GLFW_KEY_ESCAPE:
 					// Close the window. This causes the program to also terminate.
 					glfwSetWindowShouldClose(window, GL_TRUE);
+					break;
+				
+				case GLFW_KEY_1:
+					is_animate_l1 = !is_animate_l1;
+					break;
+				
+				case GLFW_KEY_2:
+					is_animate_l2 = !is_animate_l2;
+					break;
+
+				case GLFW_KEY_3:
+					is_animate_l3 = !is_animate_l3;
 					break;
 
 				default:
@@ -353,6 +371,8 @@ Transform* Window::initializeCarrousel()
 	carrousel2World = new Transform();
 	Geometry* Roof = new Geometry("Models/cone.obj");
 	Geometry* Pillar = new Geometry("Models/cylinder.obj");
+	Roof->useShader(objectShader);
+	Pillar->useShader(objectShader);
 	carrousel2World->addChild(Roof);
 	carrousel2World->addChild(Pillar);
 	// Adjust
@@ -368,6 +388,7 @@ Transform* Window::initializeCarrousel()
 	{
 		Transform* suspension2Carrousel = new Transform();
 		Geometry* suspension = new Geometry("Models/cylinder.obj");
+		suspension->useShader(objectShader);
 		suspension2Carrousel->addChild(suspension);
 		suspension->rescale(glm::vec3(0.08f, 1.7f, 0.08f));
 
@@ -384,6 +405,9 @@ Transform* Window::initializeCarrousel()
 	{
 		Transform* rabbit2Suspension = new Transform();
 		Geometry* rabbit = new Geometry("Models/bunny.obj");
+		rabbit->useShader(objectShader);
+		//Geometry* rabbit = new Geometry("Models/cone.obj");
+
 		rabbit2Suspension->addChild(rabbit);
 		rabbit->rescale(glm::vec3(0.5f, 0.5f, 0.5f));
 
@@ -392,7 +416,6 @@ Transform* Window::initializeCarrousel()
 		rabbit2Suspensions.push_back(rabbit2Suspension);
 		suspension2Carrousels[i]->addChild(rabbit2Suspension);
 	}
-
 
 	return carrousel2World;
 }

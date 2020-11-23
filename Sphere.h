@@ -11,12 +11,15 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-class Sphere {
+#include "Node.h"
+
+class Sphere : public Node
+{
 public:
 	GLuint VAO = 0, VBO = 0, NBO = 0, EBO = 0;
 
-	GLuint shader;
-	GLuint texture;
+	GLuint shaderID;
+	GLuint textureID;
 
 	int stackCount = 24;
 	int sectorCount = 24;
@@ -25,9 +28,11 @@ public:
 	glm::mat4 model = glm::mat4(1);
 
 	Sphere(int stackNumber, int sectorNumber, int scale);
-	void draw(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& eyePosition);
-	void useShader(GLuint s) { shader = s; }
-	void useTexture(GLuint t) { texture = t; }
+
+	void draw(glm::mat4 C);
+	void update(glm::mat4 C);
+	void useShader(GLuint s) { shaderID = s; }
+	void useTexture(GLuint t) { textureID = t; }
 };
 
 #endif

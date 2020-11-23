@@ -16,12 +16,11 @@ public:
     Transform();
     ~Transform();
 
-    void draw(GLuint shaderProgram, glm::mat4 C);
+    void draw(glm::mat4 C);
     void update(glm::mat4 C);
 
     void addChild(Node* child);
     void addChilds(std::vector<Transform*> child);
-    void setTransform(glm::mat4 M) { MT = M; };
 
     int getSize() { return childs.size(); }
 };

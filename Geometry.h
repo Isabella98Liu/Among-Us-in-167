@@ -23,13 +23,19 @@ private:
 
     glm::mat4 model = glm::mat4(1);
 
+    GLuint textureID = 0;
+    GLuint shaderID = 0;
+
 
 public:
     Geometry(std::string objFilename);
     ~Geometry();
 
-    void draw(GLuint shaderProgram, glm::mat4 C);
+    void draw(glm::mat4 C);
     void update(glm::mat4 C);
+
+    void useTexture(GLuint id) { textureID = id; }
+    void useShader(GLuint id) { shaderID = id; }
 
     void spin(float deg);
     void normalize();

@@ -35,6 +35,12 @@ void Camera::keyControl(bool* keys, GLfloat deltaTime)
 	if (keys[GLFW_KEY_D]) {
 		position += right * velocity;
 	}
+	if (keys[GLFW_KEY_E]) {
+		position += up * velocity;
+	}
+	if (keys[GLFW_KEY_Q]) {
+		position -= up * velocity;
+	}
 }
 
 void Camera::mouseControl(GLfloat xChange, GLfloat yChange)
@@ -57,7 +63,8 @@ void Camera::mouseControl(GLfloat xChange, GLfloat yChange)
 void Camera::update()
 {
 	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front.y = sin(glm::radians(pitch));
+	//front.y = sin(glm::radians(pitch));
+	front.y = 0;
 	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	front = glm::normalize(front);
 

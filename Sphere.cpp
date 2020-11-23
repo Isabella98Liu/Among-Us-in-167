@@ -119,18 +119,14 @@ Sphere::Sphere(int stackNumber, int sectorNumber, int scale) {
     //model = glm::rotate(90.0f, glm::vec3(1, 0, 0)) * model;
 }
 
-void Sphere::
-draw(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& eyePosition) {
-    glUseProgram(shader);
+void Sphere::draw(glm::mat4 C) {
+    glUseProgram(shaderID);
 
-    glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, false, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, false, glm::value_ptr(projection));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniform3fv(glGetUniformLocation(shader, "eyePos"), 1, glm::value_ptr(eyePosition));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, glm::value_ptr(C * model));
 
     glBindVertexArray(VAO);
-    glActiveTexture(texture);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+    glActiveTexture(textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
     glPatchParameteri(GL_PATCH_VERTICES, 4);
     glEnable(GL_PRIMITIVE_RESTART);
@@ -140,4 +136,9 @@ draw(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& eyePos
 
     glUseProgram(0);
     glBindVertexArray(0);
+}
+
+void Sphere::update(glm::mat4 C)
+{
+    model = C * model;
 }

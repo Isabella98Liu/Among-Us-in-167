@@ -35,9 +35,6 @@ public:
 	static glm::vec2 last_cursor_pos;
 	static glm::vec2 cursor_pos;
 
-	// Objects to Render
-	static Sphere* discoBall;
-
 	// Light objects
 	static DirectionalLight* directionalLight;
 	static PointLight* pointLight;
