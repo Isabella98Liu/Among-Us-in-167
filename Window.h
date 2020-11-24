@@ -50,6 +50,8 @@ public:
 	static GLuint objectShader;
 	static GLuint skyBoxShader;
 	static GLuint envMapShader;
+	static GLuint textureShader;
+
 
 	// SkyBox
 	static SkyBox* skyBox;
@@ -77,6 +79,7 @@ public:
 
 	static Transform* initializeCarrousel();
 	static Transform* initializeGround();
+	static GLuint loadTexture(std::string fileName);
 
 	bool* getKeys() { return keys; }
 	static void readVec3(float* f, glm::vec3 vector) { f[0] = vector.x; f[1] = vector.y; f[2] = vector.z;}

@@ -1,10 +1,10 @@
 #include "PointLight.h"
 
-PointLight::PointLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightPos, GLfloat exp, GLfloat lin, GLfloat con)
+PointLight::PointLight(std::string objFilename, int loadMode, glm::vec3 lightColor, glm::vec3 lightPos, GLfloat exp, GLfloat lin, GLfloat con)
 {
 	color = lightColor;
 	position = lightPos;
-	lightModel = new Geometry(objFilename);
+	lightModel = new Geometry(objFilename, loadMode);
 
 	exponent = exp;
 	linear = lin;

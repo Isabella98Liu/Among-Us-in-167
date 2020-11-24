@@ -1,12 +1,12 @@
 #include "SpotLight.h"
 
-SpotLight::SpotLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 lightDir, GLfloat exp, GLfloat lin, GLfloat con, GLfloat ang)
+SpotLight::SpotLight(std::string objFilename, int loadMode, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 lightDir, GLfloat exp, GLfloat lin, GLfloat con, GLfloat ang)
 {
 	color = lightColor;
 	position = lightPos;
 	direction = lightDir;
 
-	lightModel = new Geometry(objFilename);
+	lightModel = new Geometry(objFilename, loadMode);
 
 	exponent = exp;
 	linear = lin;

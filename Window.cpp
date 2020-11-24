@@ -33,9 +33,14 @@ GLboolean is_animate_l1 = true;
 GLboolean is_animate_l2 = true;
 GLboolean is_animate_l3 = true;
 
-// Materials and Lights
+// Materials, Lights, Textures
 Material* basicMaterial;
+Material* whiteMaterial;
+Material* goldMaterial;
+Material* silverMaterial;
+Material* pinkMaterial;
 DirectionalLight* directionalLight;
+GLuint brickTexture;
 
 // Camera Matrices 
 Camera* Window::camera;
@@ -47,6 +52,8 @@ glm::vec3 Window::eyePos;
 GLuint Window::objectShader; 
 GLuint Window::skyBoxShader;
 GLuint Window::envMapShader;
+GLuint Window::textureShader;
+
 
 // SkyBox
 SkyBox* Window::skyBox;
@@ -90,6 +97,15 @@ bool Window::initializeProgram() {
 		return false;
 	}
 
+	// Load shader for texture mapping
+	textureShader = LoadShaders("shaders/TextureObject.vert", "shaders/TextureObject.frag");
+	// Check the shader program.
+	if (!textureShader)
+	{
+		std::cerr << "Failed to load TextureObject shader program" << std::endl;
+		return false;
+	}
+
 	return true;
 }
 
@@ -98,7 +114,18 @@ bool Window::initializeObjects()
 	// Initialize materials and lights
 	basicMaterial = new Material(glm::vec3(0.0215f, 0.1745f, 0.0215f), glm::vec3(0.07568f, 0.61424f, 0.07568f),
 		glm::vec3(0.633f, 0.727811f, 0.633f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f));
-	directionalLight = new DirectionalLight("Models/sphere.obj", glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	whiteMaterial = new Material(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.55f, 0.55f, 0.55f),
+		glm::vec3(0.7f, 0.7f, 0.7f), 0.25f, glm::vec3(1.0f, 1.0f, 1.0f));
+	goldMaterial = new Material(glm::vec3(0.24725f, 0.1995f, 0.0745f), glm::vec3(0.75164f, 0.60648f, 0.22648f),
+		glm::vec3(0.628281f, 0.555802f, 0.366065f), 0.4f, glm::vec3(1.0f, 1.0f, 1.0f));
+	silverMaterial = new Material(glm::vec3(0.19225f, 0.19225f, 0.19225f), glm::vec3(0.50754f, 0.50754f, 0.50754f),
+		glm::vec3(0.508273f, 0.508273f, 0.508273f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f));
+	pinkMaterial = new Material(glm::vec3(0.4f, 0.4f, 0.4), glm::vec3(0.4f, 0.4f, 0.4f),
+		glm::vec3(0.25f, 0.25f, 0.25f), 1.0f, glm::vec3(1.0f, 0.4f, 0.7f));
+
+	directionalLight = new DirectionalLight("Models/sphere.obj", 1, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	brickTexture = loadTexture("Textures/brick3.jpg");
 
 	// Initialize skybox objects
 	skyBox = new SkyBox(faces);
@@ -106,12 +133,13 @@ bool Window::initializeObjects()
 	// Initialize a new Camera
 	camera = new Camera(glm::vec3(0.0f, 0.0f, 80.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f), 
-						0.0f, 0.0f, 5.0f, 0.5f);
+						-90.0F, 0.0f, 5.0f, 0.5f);
 
 	worldTransform = new Transform();
 
 	// Initialize carrousel transform
 	initializeCarrousel();
+	carrousel2World->update(glm::translate(glm::vec3(0.0f, -2.0f, 0.0f)));
 	worldTransform->addChild(carrousel2World);
 
 	// Add disco ball transform
@@ -123,8 +151,8 @@ bool Window::initializeObjects()
 	disco2World->update(glm::translate(glm::vec3(0.0f, 25.0f, 0.0f)));
 	worldTransform->addChild(disco2World);
 
-	//Transform* ground2World = initializeGround();
-	//worldTransform->addChild(ground2World);
+	Transform* ground2World = initializeGround();
+	worldTransform->addChild(ground2World);
 
 	return true;
 }
@@ -227,12 +255,16 @@ void Window::idleCallback()
 	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection * view));
 	glUseProgram(0);
 
+	glUseProgram(textureShader);
+	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection * view));
+	glUseProgram(0);
+
 	// L1 animation: carrousel rotate around its vertical axis
 	if (is_animate_l1)
 	{
 		carrousel2World->update(glm::rotate(2.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)));
 	}
-	if (deltaTime > 1.0f) return;	// first load produce large deltaTime, discard, to be revised in the future
+	if (deltaTime > 0.1f) return;	// first load produce large deltaTime, discard, to be revised in the future
 	suspensionMoveOffset += deltaTime * suspensionMoveDirection;
 	if (suspensionMoveOffset > suspensionMoveEdge || suspensionMoveOffset < -suspensionMoveEdge)
 		suspensionMoveDirection = (-1) * suspensionMoveDirection;
@@ -242,7 +274,7 @@ void Window::idleCallback()
 		for (int i = 0; i < suspension2Carrousels.size(); i++)
 		{
 			int direction = ((i % 2) * 2 - 1) * suspensionMoveDirection;
-			suspension2Carrousels[i]->update(glm::translate(glm::vec3(0.0f, direction * deltaTime * 1.6f, 0.0f)));
+			suspension2Carrousels[i]->update(glm::translate(glm::vec3(0.0f, direction * deltaTime * 1.4f, 0.0f)));
 		}
 	}
 	// L3 animation: rabbit moves around its own vertival axis
@@ -275,9 +307,9 @@ void Window::displayCallback(GLFWwindow* window)
 	// Render the Sky Box
 	skyBox->draw(view, projection, skyBoxShader);
 
-	basicMaterial->sendMatToShader(objectShader);
+	//basicMaterial->sendMatToShader(objectShader);
 	directionalLight->sendLightToShader(objectShader);
-	
+		
 	// Render the Scene Graph Tree
 	worldTransform->draw(glm::mat4(1));
 
@@ -369,12 +401,17 @@ Transform* Window::initializeCarrousel()
 {
 	// L1 (Trans carrousel2World + Geo Roof + Geo pillar)
 	carrousel2World = new Transform();
-	Geometry* Roof = new Geometry("Models/cone.obj");
-	Geometry* Pillar = new Geometry("Models/cylinder.obj");
+	Geometry* Roof = new Geometry("Models/cone.obj", 2);
 	Roof->useShader(objectShader);
+	Roof->useMaterial(goldMaterial);
+
+	Geometry* Pillar = new Geometry("Models/cylinder.obj", 2);
 	Pillar->useShader(objectShader);
+	Pillar->useMaterial(goldMaterial);
+
 	carrousel2World->addChild(Roof);
 	carrousel2World->addChild(Pillar);
+
 	// Adjust
 	Roof->rescale(glm::vec3(3.0f, 0.6f, 3.0f));
 	Pillar->rescale(glm::vec3(0.3f, 2.5f, 0.3f));
@@ -387,8 +424,9 @@ Transform* Window::initializeCarrousel()
 	for (int i = 0; i < suspensionCount; i++)
 	{
 		Transform* suspension2Carrousel = new Transform();
-		Geometry* suspension = new Geometry("Models/cylinder.obj");
+		Geometry* suspension = new Geometry("Models/cylinder.obj", 2);
 		suspension->useShader(objectShader);
+		suspension->useMaterial(silverMaterial);
 		suspension2Carrousel->addChild(suspension);
 		suspension->rescale(glm::vec3(0.08f, 1.7f, 0.08f));
 
@@ -404,12 +442,14 @@ Transform* Window::initializeCarrousel()
 	for (int i = 0; i < suspension2Carrousels.size(); i++)
 	{
 		Transform* rabbit2Suspension = new Transform();
-		Geometry* rabbit = new Geometry("Models/bunny.obj");
+		Geometry* rabbit = new Geometry("Models/bunny.obj", 1);
 		rabbit->useShader(objectShader);
+		rabbit->useMaterial(pinkMaterial);
 		//Geometry* rabbit = new Geometry("Models/cone.obj");
 
 		rabbit2Suspension->addChild(rabbit);
 		rabbit->rescale(glm::vec3(0.5f, 0.5f, 0.5f));
+		rabbit->translate(glm::vec3(0.0f, -1.0f, 0.0f));
 
 		rabbit2Suspension->update(glm::translate(glm::vec3(0.0f, -2.5f, 0.0f)));
 
@@ -423,11 +463,42 @@ Transform* Window::initializeCarrousel()
 Transform* Window::initializeGround()
 {
 	Transform* ground2World = new Transform();
-	Geometry* Ground = new Geometry("Models/cube.obj");
+	Geometry* Ground = new Geometry("Models/cube.obj", 2);
+	//Ground->useShader(objectShader);
+	Ground->useShader(textureShader);
+	Ground->useMaterial(basicMaterial);
+	Ground->useTexture(brickTexture);
+
 	ground2World->addChild(Ground);
 
-	Ground->rescale(glm::vec3(100.0f, 0.1f, 100.0f));
+	Ground->rescale(glm::vec3(50.0f, 0.1f, 50.0f));
 	Ground->translate(glm::vec3(0.0f, -20.0f, 0.0f));
 	
 	return ground2World;
+}
+
+GLuint Window::loadTexture(std::string fileName)
+{
+	GLuint textureID;
+
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // set bi-linear interpolation
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // for both filtering modes
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture edge mode
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load(fileName.c_str(), &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << fileName << std::endl;
+	}
+	stbi_image_free(data);
+	return textureID;
 }

@@ -1,10 +1,5 @@
 #version 330 core
 
-in vec3 fragNormal;
-in vec3 fragPos;
-
-out vec4 fragColor;
-
 struct Light
 {
 	vec3 color;
@@ -41,12 +36,19 @@ struct Material
 	vec3 color;
 };
 
+
+in vec3 fragNormal;
+in vec3 fragPos;
+
+out vec4 fragColor;
+
 uniform Material material;
 uniform DirectionalLight directionalLight;
 //uniform PointLight pointLight;
 //uniform SpotLight spotLight;
 
 uniform vec3 eyePos;
+uniform sampler2D tex;
 
 
 // Reference: https://www.udemy.com/course/graphics-with-modern-opengl/

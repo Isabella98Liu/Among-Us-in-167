@@ -1,10 +1,10 @@
 #include "DirectionalLight.h"
 
-DirectionalLight::DirectionalLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightDir)
+DirectionalLight::DirectionalLight(std::string objFilename, int loadMode, glm::vec3 lightColor, glm::vec3 lightDir)
 {
 	color = lightColor;
 	direction = lightDir;
-	lightModel = new Geometry(objFilename);
+	lightModel = new Geometry(objFilename, loadMode);
 
 	// resize the model to fit in 1/4 inch of the screen
 	glm::mat4 model = lightModel->getModel();

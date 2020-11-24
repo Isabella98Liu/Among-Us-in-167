@@ -9,7 +9,7 @@ private:
 	Geometry* lightModel;		// the 3D visualized model for light
 
 public:
-	DirectionalLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightDir);
+	DirectionalLight(std::string objFilename, int loadMode, glm::vec3 lightColor, glm::vec3 lightDir);
 	~DirectionalLight();
 
 	Geometry* getModel() { return lightModel; };

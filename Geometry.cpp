@@ -1,49 +1,14 @@
 #include "Geometry.h"
 
-Geometry::Geometry(std::string objFilename)
+/* TODO: load uvs*/
+Geometry::Geometry(std::string objFilename, int mode)
 {
-	// Read obj data from file
-	std::ifstream objFile(objFilename);
-	if (objFile.is_open())
-	{
-		std::string line;
-		while (std::getline(objFile, line))
-		{
-			std::stringstream ss;
-			ss << line;
-			//Read the first word of the line
-			std::string label;
-			ss >> label;
-			if(label == "v")
-			{
-				glm::vec3 vertex;
-				ss >> vertex.x >> vertex.y >> vertex.z;
-				vertices.push_back(vertex);
-			}
-			else if(label == "vn")
-			{
-				glm::vec3 normal;
-				ss >> normal.x >> normal.y >> normal.z;
-				normal = glm::normalize(normal);
-				normals.push_back(normal);
-			}
-			else if (label == "f")
-			{
-				glm::ivec3 indice;
-				ss >> indice.x;
-				ss.ignore(10, ' ');
-				ss >> indice.y;
-				ss.ignore(10, ' ');
-				ss >> indice.z;
-				ss.ignore(10, ' ');
-				indice -= 1;
-				indices.push_back(indice);
-			}
-		}
-	}
-	else
-		std::cerr << "Can't open the file " << objFilename << std::endl;
-	objFile.close();
+	loadMode = mode;
+
+	if (loadMode == 1)
+		loadMode1(objFilename);
+	else if (loadMode == 2)
+		loadMode2(objFilename);
 
 	// Normalize the object to fit in the screen
 	normalize();
@@ -70,14 +35,143 @@ Geometry::Geometry(std::string objFilename)
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 
-	// Generate EBO, bind the EBO to the bound VAO, and send the index data
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(glm::ivec3) * indices.size(), indices.data(), GL_STATIC_DRAW);
-	
+	if(loadMode == 1)
+	{
+		// Generate EBO, bind the EBO to the bound VAO, and send the index data
+		glGenBuffers(1, &EBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(glm::uvec3) * indices.size(), indices.data(), GL_STATIC_DRAW);
+	}	
+
 	// Unbind the VAO and VBO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+}
+
+void Geometry::loadMode1(std::string objFilename)
+{
+	// Read obj data from file
+	std::ifstream objFile(objFilename);
+	if (objFile.is_open())
+	{
+		std::string line;
+		while (std::getline(objFile, line))
+		{
+			std::stringstream ss;
+			ss << line;
+			//Read the first word of the line
+			std::string label;
+			ss >> label;
+			if (label == "v")
+			{
+				glm::vec3 vertex;
+				ss >> vertex.x >> vertex.y >> vertex.z;
+				vertices.push_back(vertex);
+			}
+			else if (label == "vn")
+			{
+				glm::vec3 normal;
+				ss >> normal.x >> normal.y >> normal.z;
+				normal = glm::normalize(normal);
+				normals.push_back(normal);
+			}
+			else if (label == "f")
+			{
+				glm::uvec3 indice;
+				ss >> indice.x;
+				ss.ignore(10, ' ');
+				ss >> indice.y;
+				ss.ignore(10, ' ');
+				ss >> indice.z;
+				ss.ignore(10, ' ');
+				indice -= 1;
+				indices.push_back(indice);
+			}
+		}
+	}
+	else
+		std::cerr << "Can't open the file " << objFilename << std::endl;
+	objFile.close();
+}
+
+/* Model load tutorial: http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/*/
+void Geometry::loadMode2(std::string objFilename)
+{
+	std::vector<glm::vec3> temp_vertices;
+	std::vector<glm::vec2> temp_uvs;
+	std::vector<glm::vec3> temp_normals;
+	std::vector<glm::uvec3> vertexIndices, uvIndices, normalIndices;
+
+	FILE* file = fopen(objFilename.c_str(), "r");
+	if (file == NULL) 
+	{
+		printf("Can not open the file : %s\n", objFilename);
+		return;
+	}
+	char line[128];
+	int res = fscanf(file, "%s", line);
+	while (res != EOF)
+	{
+		if (strcmp(line, "v") == 0)
+		{
+			glm::vec3 vertex;
+			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+			temp_vertices.push_back(vertex);
+		}
+		else if (strcmp(line, "vt") == 0)
+		{
+			glm::vec2 uv;
+			fscanf(file, "%f %f\n", &uv.x, &uv.y);
+			temp_uvs.push_back(uv);
+		}
+		else if (strcmp(line, "vn") == 0)
+		{
+			glm::vec3 normal;
+			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+			temp_normals.push_back(normal);
+		}
+		else if (strcmp(line, "f") == 0)
+		{
+			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0],
+				&vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
+			if (matches != 9)
+			{
+				printf("File can not be parsed by loadMode2\n");
+				return;
+			}
+			vertexIndices.push_back(glm::uvec3(vertexIndex[0], vertexIndex[1], vertexIndex[2]));
+			uvIndices.push_back(glm::uvec3(uvIndex[0], uvIndex[1], uvIndex[2]));
+			normalIndices.push_back(glm::uvec3(normalIndex[0], normalIndex[1], normalIndex[2]));
+		}
+		res = fscanf(file, "%s", line);
+	}
+	/* processing data: when produce the uvs and normals can not simply duplicate the size of vertices and loop over
+	because the number of uvs and normals could be larger than the size vertices
+	*/
+	for (int i = 0; i < vertexIndices.size(); i++)
+	{
+		int vertex_index = vertexIndices[i].x - 1;
+		int uv_index = uvIndices[i].x - 1;
+		int normal_index = normalIndices[i].x - 1;
+		vertices.push_back(temp_vertices[vertex_index]);
+		uvs.push_back(temp_uvs[uv_index]);
+		normals.push_back(temp_normals[normal_index]);
+
+		vertex_index = vertexIndices[i].y - 1;
+		uv_index = uvIndices[i].y - 1;
+		normal_index = normalIndices[i].y - 1;
+		vertices.push_back(temp_vertices[vertex_index]);
+		uvs.push_back(temp_uvs[uv_index]);
+		normals.push_back(temp_normals[normal_index]);
+
+		vertex_index = vertexIndices[i].z - 1;
+		uv_index = uvIndices[i].z - 1;
+		normal_index = normalIndices[i].z - 1;
+		vertices.push_back(temp_vertices[vertex_index]);
+		uvs.push_back(temp_uvs[uv_index]);
+		normals.push_back(temp_normals[normal_index]);
+	}
 }
 
 Geometry::~Geometry()
@@ -91,6 +185,11 @@ Geometry::~Geometry()
 
 void Geometry::draw(glm::mat4 C)
 {
+	// Send material information to shader
+	// ----IMPORTANT----- needs to be sent before binding the VAO other wise it will be rendered on next material
+	if(material != NULL)
+		material->sendMatToShader(shaderID);
+
 	// Actiavte the shader program 
 	glUseProgram(shaderID);
 
@@ -100,12 +199,48 @@ void Geometry::draw(glm::mat4 C)
 	// Bind the VAO
 	glBindVertexArray(VAO);
 
+	// If a texture was assigned, pass texture to shader
+	if (textureID != 0)
+	{
+		glActiveTexture(textureID);
+		glBindTexture(GL_TEXTURE_2D, textureID);
+	}
+
 	// Draw the points using triangles, indexed with the EBO
-	glDrawElements(GL_TRIANGLES, 3 * indices.size(), GL_UNSIGNED_INT, 0);
+	if (loadMode == 1)
+	{
+		glDrawElements(GL_TRIANGLES, 3 * indices.size(), GL_UNSIGNED_INT, 0);
+	}
+	else if (loadMode == 2)
+	{
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+	}
 
 	// Unbind the VAO and shader program
 	glBindVertexArray(0);
 	glUseProgram(0);
+}
+
+void Geometry::useTexture(GLuint id)
+{
+
+	textureID = id;
+
+	// generate buffer for TBO and bind it to VAO
+	glGenBuffers(1, &TBO);
+
+	glBindVertexArray(VAO);
+
+	// Bind TBO to the bound VAO, and store the point data
+	glBindBuffer(GL_ARRAY_BUFFER, TBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), uvs.data(), GL_STATIC_DRAW);
+	// Enable Vertex Attribute 0 to pass point data through to the shader
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), 0);
+
+	// Unbind
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void Geometry::update(glm::mat4 C)

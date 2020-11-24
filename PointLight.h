@@ -12,7 +12,7 @@ private:
 	GLfloat exponent, linear, constant;
 
 public:
-	PointLight(std::string objFilename, glm::vec3 lightColor, glm::vec3 lightPos, GLfloat exp, GLfloat lin, GLfloat con);
+	PointLight(std::string objFilename, int loadMode, glm::vec3 lightColor, glm::vec3 lightPos, GLfloat exp, GLfloat lin, GLfloat con);
 	~PointLight();
 
 	Geometry* getModel() { return lightModel; }
