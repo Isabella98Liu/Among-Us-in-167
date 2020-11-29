@@ -110,6 +110,9 @@ void SkyBox::loadMap()
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	// Unbind 
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 void SkyBox::draw(const glm::mat4& view, const glm::mat4& projection, GLuint shader)
@@ -117,7 +120,9 @@ void SkyBox::draw(const glm::mat4& view, const glm::mat4& projection, GLuint sha
 	// Actiavte the shader program 
 	glUseProgram(shader);
 
-	glDepthMask(GL_FALSE);
+	// Enable face culling
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
 	
 	// Get the shader variable locations and send the uniform data to the shader 
 	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, false, glm::value_ptr(view));
@@ -130,7 +135,9 @@ void SkyBox::draw(const glm::mat4& view, const glm::mat4& projection, GLuint sha
 
 	// Draw the points using triangles, indexed with the EBO
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-	glDepthMask(GL_TRUE);
+
+	// Disable front face culling
+	glCullFace(GL_BACK);
 
 	// Unbind the VAO and shader program
 	glBindVertexArray(0);

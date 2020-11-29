@@ -38,5 +38,8 @@ public:
 
 	void update();
 	glm::vec3 getPosition() { return position; }
+
+	void setYaw(GLfloat y) { yaw = y; }
+	void setPitch(GLfloat p) { pitch = p; }
 };
 
