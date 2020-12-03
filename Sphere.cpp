@@ -134,6 +134,7 @@ void Sphere::draw(glm::mat4 C) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glDrawElements(GL_QUADS, numsToDraw, GL_UNSIGNED_INT, NULL);
 
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     glUseProgram(0);
     glBindVertexArray(0);
 }

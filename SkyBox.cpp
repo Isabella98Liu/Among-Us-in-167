@@ -138,6 +138,7 @@ void SkyBox::draw(const glm::mat4& view, const glm::mat4& projection, GLuint sha
 
 	// Disable front face culling
 	glCullFace(GL_BACK);
+	//glDisable(GL_CULL_FACE);
 
 	// Unbind the VAO and shader program
 	glBindVertexArray(0);

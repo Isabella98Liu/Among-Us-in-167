@@ -35,7 +35,6 @@ GLboolean is_animate_l3 = true;
 
 // Materials, Lights, Textures
 Material* basicMaterial;
-Material* whiteMaterial;
 Material* goldMaterial;
 Material* silverMaterial;
 Material* pinkMaterial;
@@ -57,7 +56,7 @@ GLuint Window::textureShader;
 // SkyBox
 SkyBox* Window::skyBox;
 
-// textures files for skybox
+ //textures files for skybox
 vector<std::string> faces
 {
 	"Textures/sh_rt.png",
@@ -68,16 +67,25 @@ vector<std::string> faces
 	"Textures/sh_bk.png"
 };
 
+//vector<std::string> faces
+//{
+//	"Textures/white.png",
+//	"Textures/black.png",
+//	"Textures/blue.png",
+//	"Textures/green.png",
+//	"Textures/red.png",
+//	"Textures/yellow.png"
+//};
+
 // dynamic environmental mapping
 // Reference: https://community.khronos.org/t/how-to-use-6-2d-textures-as-1-cube-texture/67577/4
-// https://github.com/shaofengtang/DynamicEnvironmentMapping/blob/master/DynamicEnvironmentMapping/DynamicEnvironmentMapping/main.cpp
 GLuint framebuffer;
 GLuint mirrorCubeMap;
-vector<GLuint> screen_textures;
 Camera* mirror_camera;
+Sphere* discoBall;
 glm::mat4 temp_view;
 glm::vec3 temp_eyePos;
-Sphere* discoBall;
+glm::mat4 temp_projection;
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -122,61 +130,17 @@ bool Window::initializeProgram() {
 bool Window::initializeObjects()
 {
 	// Initialize varaibles for dynamic environmental mapping
-	mirror_camera = new Camera(glm::vec3(0.0f, 25.0f, 0.0f),
-						glm::vec3(0.0f, 1.0f, 0.0f),
+	mirror_camera = new Camera(glm::vec3(-35.0f, 2.0f, 0.0f),
+						glm::vec3(0.0f, -1.0f, 0.0f),
 						0.0f, 0.0f, 5.0f, 0.5f);
-	glGenFramebuffers(1, &framebuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	mirror_camera->setMirroring(true);	// set mirroring mode to camera, so it will process pitch data
 
-	glGenTextures(1, &mirrorCubeMap);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, mirrorCubeMap);
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-	for (int i = 0; i < 6; ++i)
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-
-	GLenum fboAttachment[6] = { GL_COLOR_ATTACHMENT0,
-					GL_COLOR_ATTACHMENT1,
-					GL_COLOR_ATTACHMENT2,
-					GL_COLOR_ATTACHMENT3,
-					GL_COLOR_ATTACHMENT4,
-					GL_COLOR_ATTACHMENT5 };
-
-	for (int i = 0; i < 6; ++i) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER, fboAttachment[i], GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mirrorCubeMap, 0);
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	//// create a color attachment texture
-	//unsigned int textureColorbuffer;
-	//glGenTextures(1, &textureColorbuffer);
-	//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-	//// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-	//unsigned int rbo;
-	//glGenRenderbuffers(1, &rbo);
-	//glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height); // use a single renderbuffer object for both a depth AND stencil buffer.
-	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
-	// // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//	cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// Generate framebuffer & cubemap and bind cubemap to the framebuffer
+	loadFrameBuffer();
 
 	// Initialize materials and lights
 	basicMaterial = new Material(glm::vec3(0.0215f, 0.1745f, 0.0215f), glm::vec3(0.07568f, 0.61424f, 0.07568f),
 		glm::vec3(0.633f, 0.727811f, 0.633f), 0.6f, glm::vec3(1.0f, 1.0f, 1.0f));
-	whiteMaterial = new Material(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.55f, 0.55f, 0.55f),
-		glm::vec3(0.7f, 0.7f, 0.7f), 0.25f, glm::vec3(1.0f, 1.0f, 1.0f));
 	goldMaterial = new Material(glm::vec3(0.24725f, 0.1995f, 0.0745f), glm::vec3(0.75164f, 0.60648f, 0.22648f),
 		glm::vec3(0.628281f, 0.555802f, 0.366065f), 0.4f, glm::vec3(1.0f, 1.0f, 1.0f));
 	silverMaterial = new Material(glm::vec3(0.19225f, 0.19225f, 0.19225f), glm::vec3(0.50754f, 0.50754f, 0.50754f),
@@ -194,7 +158,7 @@ bool Window::initializeObjects()
 	// Initialize a new Camera
 	camera = new Camera(glm::vec3(0.0f, 0.0f, 80.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f), 
-						-90.0F, 0.0f, 5.0f, 0.5f);
+						-90.0f, 0.0f, 10.0f, 0.5f);
 
 	worldTransform = new Transform();
 
@@ -205,16 +169,15 @@ bool Window::initializeObjects()
 
 	// Add disco ball transform
 	Transform* disco2World = new Transform();
-	discoBall = new Sphere(24, 24, 5);
+	discoBall = new Sphere(200, 200, 10);
 	discoBall->useTexture(skyBox->getTexture());
 	discoBall->useShader(envMapShader);
 	disco2World->addChild(discoBall);
-	disco2World->update(glm::translate(glm::vec3(0.0f, 25.0f, 0.0f)));
+	disco2World->update(glm::translate(mirror_camera->getPosition()));
 	worldTransform->addChild(disco2World);
 
 	Transform* ground2World = initializeGround();
 	worldTransform->addChild(ground2World);
-
 	return true;
 }
 
@@ -306,21 +269,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-	glUseProgram(objectShader);
-	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(eyePos));
-	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection * view));
-	glUseProgram(0);
-
-	glUseProgram(envMapShader);
-	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(eyePos));
-	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection * view));
-	glUseProgram(0);
-
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection * view));
-	glUseProgram(0);
-
-	// ----ANIMATION----
+	// ----UPDATE ANIMATION----
 
 	// L1 animation: carrousel rotate around its vertical axis
 	if (is_animate_l1)
@@ -357,201 +306,14 @@ void Window::displayCallback(GLFWwindow* window)
 	deltaTime = currentTime - lastTime;			// (currentTime - lastTime) * 1000 / SDL_GetPerformancefrequency();
 	lastTime = currentTime;
 
-	// first render pass: mirror ball cubemap (six textures)
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-	// ---------------FACE 1----------------
-	glDrawBuffer(GL_COLOR_ATTACHMENT0);
-	//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
-	// make sure we clear the framebuffer's content
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw texture content using the first mirror camera position with yaw = 0, pitch = 0
-	temp_view = mirror_camera->calculateViewMatrix();
-	temp_eyePos = mirror_camera->getPosition();
-	glUseProgram(objectShader);
-	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(envMapShader);
-	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUseProgram(0);
-
-	// Render the Sky Box
-	skyBox->draw(temp_view, projection, skyBoxShader);
-	//basicMaterial->sendMatToShader(objectShader);
-	directionalLight->sendLightToShader(objectShader);
-	// Render the Scene Graph Tree
-	worldTransform->draw(glm::mat4(1));
-	//glDisable(GL_DEPTH_TEST);
-
-	// ---------------FACE 2----------------
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	glDrawBuffer(GL_COLOR_ATTACHMENT1);
-	//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
-	// make sure we clear the framebuffer's content
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw texture content using the first mirror camera position with yaw = 90, pitch = 0
-	mirror_camera->setYaw(90.0f);
-	temp_view = mirror_camera->calculateViewMatrix();
-	temp_eyePos = mirror_camera->getPosition();
-	glUseProgram(objectShader);
-	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(envMapShader);
-	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUseProgram(0);
-
-	// Render the Sky Box
-	skyBox->draw(temp_view, projection, skyBoxShader);
-	//basicMaterial->sendMatToShader(objectShader);
-	directionalLight->sendLightToShader(objectShader);
-	// Render the Scene Graph Tree
-	worldTransform->draw(glm::mat4(1));
-	//glDisable(GL_DEPTH_TEST);
-
-	// ---------------FACE 3----------------
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	glDrawBuffer(GL_COLOR_ATTACHMENT2);
-	//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
-	// make sure we clear the framebuffer's content
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw texture content using the first mirror camera position with yaw = 180, pitch = 0
-	mirror_camera->setYaw(180.0f);
-	temp_view = mirror_camera->calculateViewMatrix();
-	temp_eyePos = mirror_camera->getPosition();
-	glUseProgram(objectShader);
-	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(envMapShader);
-	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection * temp_view));
-	glUseProgram(0);
-
-	// Render the Sky Box
-	skyBox->draw(temp_view, projection, skyBoxShader);
-	//basicMaterial->sendMatToShader(objectShader);
-	directionalLight->sendLightToShader(objectShader);
-	// Render the Scene Graph Tree
-	worldTransform->draw(glm::mat4(1));
-	//glDisable(GL_DEPTH_TEST);
-
-	// ---------------FACE 4----------------
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	glDrawBuffer(GL_COLOR_ATTACHMENT3);
-	//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
-	// make sure we clear the framebuffer's content
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw texture content using the first mirror camera position with yaw = 270, pitch = 0
-	mirror_camera->setYaw(270.0f);
-	temp_view = mirror_camera->calculateViewMatrix();
-	temp_eyePos = mirror_camera->getPosition();
-	glUseProgram(objectShader);
-	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(envMapShader);
-	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUseProgram(0);
-
-	// Render the Sky Box
-	skyBox->draw(temp_view, projection, skyBoxShader);
-	//basicMaterial->sendMatToShader(objectShader);
-	directionalLight->sendLightToShader(objectShader);
-	// Render the Scene Graph Tree
-	worldTransform->draw(glm::mat4(1));
-	//glDisable(GL_DEPTH_TEST);
-
-	// ---------------FACE 5----------------
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	glDrawBuffer(GL_COLOR_ATTACHMENT4);
-	//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
-	// make sure we clear the framebuffer's content
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw texture content using the first mirror camera position with yaw = 0, pitch = 90
-	mirror_camera->setPitch(90.0f);
-	temp_view = mirror_camera->calculateViewMatrix();
-	temp_eyePos = mirror_camera->getPosition();
-	glUseProgram(objectShader);
-	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(envMapShader);
-	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUseProgram(0);
-
-	// Render the Sky Box
-	skyBox->draw(temp_view, projection, skyBoxShader);
-	//basicMaterial->sendMatToShader(objectShader);
-	directionalLight->sendLightToShader(objectShader);
-	// Render the Scene Graph Tree
-	worldTransform->draw(glm::mat4(1));
-	//glDisable(GL_DEPTH_TEST);
-
-	// ---------------FACE 6----------------
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	glDrawBuffer(GL_COLOR_ATTACHMENT5);
-	//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
-
-	// make sure we clear the framebuffer's content
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// draw texture content using the first mirror camera position with yaw = 0, pitch = -90
-	mirror_camera->setPitch(-90.0f);
-	temp_view = mirror_camera->calculateViewMatrix();
-	temp_eyePos = mirror_camera->getPosition();
-	glUseProgram(objectShader);
-	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(envMapShader);
-	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection* temp_view));
-	glUseProgram(0);
-
-	// Render the Sky Box
-	skyBox->draw(temp_view, projection, skyBoxShader);
-	//basicMaterial->sendMatToShader(objectShader);
-	directionalLight->sendLightToShader(objectShader);
-	// Render the Scene Graph Tree
-	worldTransform->draw(glm::mat4(1));
-	//glDisable(GL_DEPTH_TEST);
-
-
-
+	// Generate dynamic environment mapping texture
+	loadEnvTexture();
 
 	// second render pass: draw as normal
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Clear the color and depth buffers
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	camera->keyControl(keys, deltaTime);
@@ -568,16 +330,14 @@ void Window::displayCallback(GLFWwindow* window)
 	glUseProgram(textureShader);
 	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection* view));
 	glUseProgram(0);
-	glUseProgram(skyBoxShader);
 
 	// Render the Sky Box
 	skyBox->draw(view, projection, skyBoxShader);
 
-	//basicMaterial->sendMatToShader(objectShader);
 	directionalLight->sendLightToShader(objectShader);
 	
 	// Set the env mapping for disco ball
-	//discoBall->useTexture(mirrorCubeMap);
+	discoBall->useTexture(mirrorCubeMap);
 
 	// Render the Scene Graph Tree
 	worldTransform->draw(glm::mat4(1));
@@ -745,6 +505,234 @@ Transform* Window::initializeGround()
 	Ground->translate(glm::vec3(0.0f, -20.0f, 0.0f));
 	
 	return ground2World;
+}
+
+void Window::loadFrameBuffer()
+{
+	// The usage of framebuffer layers refered from: 
+	// https://github.com/shaofengtang/DynamicEnvironmentMapping/blob/master/DynamicEnvironmentMapping/DynamicEnvironmentMapping/main.cpp
+
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+	glGenTextures(1, &mirrorCubeMap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, mirrorCubeMap);
+
+	for (int i = 0; i < 6; ++i)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	}
+
+	// Use bilinear interpolation
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Use clamp to edge to hide skybox edges
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	for (int i = 0; i < 6; ++i) {
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mirrorCubeMap, 0);
+	}
+
+	// generate renderbuffer (as depth buffer and stencil buffer)
+	unsigned int rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	// attach it to currently bound FBO
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	// check framebuffer status
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Window::loadEnvTexture()
+{
+	// first render pass: mirror ball cubemap (six textures)
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+	// ---------------FACE 1----------------
+	glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+	// make sure we clear the framebuffer's content
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Use fov = 90 to generate panaroma
+	temp_projection = glm::perspective(glm::radians(90.0),
+		double(width) / (double)height, 1.0, 1000.0);
+
+	// draw texture content using the first mirror camera position with yaw = 0, pitch = 0
+	mirror_camera->setYawPitch(0.0f, 0.0f);
+	temp_view = mirror_camera->calculateViewMatrix();
+	temp_eyePos = mirror_camera->getPosition();
+	glUseProgram(objectShader);
+	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(envMapShader);
+	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(textureShader);
+	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUseProgram(0);
+
+	// Render the Sky Box
+	skyBox->draw(temp_view, temp_projection, skyBoxShader);
+	directionalLight->sendLightToShader(objectShader);
+
+	// Render the Scene Graph Tree
+	worldTransform->draw(glm::mat4(1));
+
+
+	// ---------------FACE 2----------------
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0 + 1);
+
+	// make sure we clear the framebuffer's content
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// draw texture content using the first mirror camera position with yaw = -180, pitch = 0
+	mirror_camera->setYawPitch(-180.0f, 0.0f);
+	temp_view = mirror_camera->calculateViewMatrix();
+	temp_eyePos = mirror_camera->getPosition();
+	glUseProgram(objectShader);
+	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(envMapShader);
+	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(textureShader);
+	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUseProgram(0);
+
+	// Render the Sky Box
+	skyBox->draw(temp_view, temp_projection, skyBoxShader);
+	directionalLight->sendLightToShader(objectShader);
+	// Render the Scene Graph Tree
+	worldTransform->draw(glm::mat4(1));
+
+
+	// ---------------FACE 3----------------
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0 + 2);
+
+	// make sure we clear the framebuffer's content
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// draw texture content using the first mirror camera position with yaw = -90, pitch = 90
+	mirror_camera->setYawPitch(-90.0f, 90.0f);
+	temp_view = mirror_camera->calculateViewMatrix();
+	temp_eyePos = mirror_camera->getPosition();
+	glUseProgram(objectShader);
+	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(envMapShader);
+	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(textureShader);
+	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUseProgram(0);
+
+	// Render the Sky Box
+	skyBox->draw(temp_view, temp_projection, skyBoxShader);
+	directionalLight->sendLightToShader(objectShader);
+	// Render the Scene Graph Tree
+	worldTransform->draw(glm::mat4(1));
+
+
+	// ---------------FACE 4----------------
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0 + 3);
+
+	// make sure we clear the framebuffer's content
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// draw texture content using the first mirror camera position with yaw = -90, pitch = 90
+	mirror_camera->setYawPitch(-90.0f, -90.0f);
+	temp_view = mirror_camera->calculateViewMatrix();
+	temp_eyePos = mirror_camera->getPosition();
+	glUseProgram(objectShader);
+	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(envMapShader);
+	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(textureShader);
+	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUseProgram(0);
+
+	// Render the Sky Box
+	skyBox->draw(temp_view, temp_projection, skyBoxShader);
+	directionalLight->sendLightToShader(objectShader);
+	// Render the Scene Graph Tree
+	worldTransform->draw(glm::mat4(1));
+
+	// ---------------FACE 5----------------
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0 + 4);
+	//glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+
+	// make sure we clear the framebuffer's content
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// draw texture content using the first mirror camera position with yaw = 90, pitch = 0
+	mirror_camera->setYawPitch(90.0f, 0.0f);
+	temp_view = mirror_camera->calculateViewMatrix();
+	temp_eyePos = mirror_camera->getPosition();
+	glUseProgram(objectShader);
+	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(envMapShader);
+	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(textureShader);
+	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUseProgram(0);
+
+	// Render the Sky Box
+	skyBox->draw(temp_view, temp_projection, skyBoxShader);
+	directionalLight->sendLightToShader(objectShader);
+	// Render the Scene Graph Tree
+	worldTransform->draw(glm::mat4(1));
+
+	// ---------------FACE 6----------------
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0 + 5);
+
+	// make sure we clear the framebuffer's content
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// draw texture content using the first mirror camera position with yaw = -90, pitch = 0
+	mirror_camera->setYawPitch(-90.0f, 0.0f);
+	temp_view = mirror_camera->calculateViewMatrix();
+	temp_eyePos = mirror_camera->getPosition();
+	glUseProgram(objectShader);
+	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(envMapShader);
+	glUniformMatrix4fv(glGetUniformLocation(envMapShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUniform3fv(glGetUniformLocation(envMapShader, "eyePos"), 1, glm::value_ptr(temp_eyePos));
+	glUseProgram(textureShader);
+	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(temp_projection * temp_view));
+	glUseProgram(0);
+
+	// Render the Sky Box
+	skyBox->draw(temp_view, temp_projection, skyBoxShader);
+	directionalLight->sendLightToShader(objectShader);
+	// Render the Scene Graph Tree
+	worldTransform->draw(glm::mat4(1));
 }
 
 GLuint Window::loadTexture(std::string fileName)

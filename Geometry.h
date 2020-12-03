@@ -16,6 +16,7 @@ class Geometry : public Node
 private:
     GLuint VAO;
     GLuint VBO, EBO, NBO, TBO;  // NBO - normals, TBO - uvs
+    GLboolean envMapping = false;
 
     int loadMode;
     std::vector<glm::vec3> vertices;
@@ -54,5 +55,6 @@ public:
 
     glm::mat4 getModel() { return model; }
     void setModel(glm::mat4 m) { model = m; }
+    void setEnvMapping() { envMapping = true; }
 };
 

@@ -62,7 +62,7 @@ void print_versions()
 int main(void)
 {
 	// Create the GLFW window.
-	GLFWwindow* window = Window::createWindow(1280, 720);
+	GLFWwindow* window = Window::createWindow(1200, 1200);
 	if (!window)
 		exit(EXIT_FAILURE);
 

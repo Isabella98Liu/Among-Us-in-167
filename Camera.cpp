@@ -63,8 +63,10 @@ void Camera::mouseControl(GLfloat xChange, GLfloat yChange)
 void Camera::update()
 {
 	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	//front.y = sin(glm::radians(pitch));
-	front.y = 0;
+	if(!isMirroring)
+		front.y = 0;
+	else
+		front.y = sin(glm::radians(pitch));
 	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	front = glm::normalize(front);
 

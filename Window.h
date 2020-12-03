@@ -79,6 +79,9 @@ public:
 
 	static Transform* initializeCarrousel();
 	static Transform* initializeGround();
+
+	static void loadFrameBuffer();
+	static void loadEnvTexture();
 	static GLuint loadTexture(std::string fileName);
 
 	bool* getKeys() { return keys; }

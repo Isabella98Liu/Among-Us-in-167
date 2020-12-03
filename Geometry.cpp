@@ -203,7 +203,10 @@ void Geometry::draw(glm::mat4 C)
 	if (textureID != 0)
 	{
 		glActiveTexture(textureID);
-		glBindTexture(GL_TEXTURE_2D, textureID);
+		if(envMapping)
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+		else
+			glBindTexture(GL_TEXTURE_2D, textureID);
 	}
 
 	// Draw the points using triangles, indexed with the EBO
@@ -216,6 +219,12 @@ void Geometry::draw(glm::mat4 C)
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 	}
 
+	//Unbind
+	if (envMapping)
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	else
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 	// Unbind the VAO and shader program
 	glBindVertexArray(0);
 	glUseProgram(0);
@@ -226,6 +235,7 @@ void Geometry::useTexture(GLuint id)
 
 	textureID = id;
 
+	if (envMapping) return;
 	// generate buffer for TBO and bind it to VAO
 	glGenBuffers(1, &TBO);
 
