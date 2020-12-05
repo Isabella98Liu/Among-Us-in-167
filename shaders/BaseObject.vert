@@ -9,6 +9,7 @@ uniform mat4 model;
 
 out vec3 fragPos;
 out vec3 fragNormal;
+out vec2 texCoord;
 
 void main()
 {
@@ -16,4 +17,6 @@ void main()
 	
 	fragPos = (model * vec4(position, 1.0)).xyz;
 	fragNormal = mat3(transpose(inverse(model))) * normal;
+
+	texCoord = tex;
 }

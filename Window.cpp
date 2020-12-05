@@ -26,20 +26,48 @@ glm::vec3 Window::eyePos;
 
 // Shader Program ID
 GLuint Window::objectShader; 
-GLuint Window::textureShader;
+GLuint Window::toonShadingShader;
 
 // Scene Graph
 /*
 						World
 				/			\		......		\
 	lobby2World			astronaut2World1		astronaut2World10
-	(lobby.geo)			(astronaut1.geo)		(astronaut10.geo)
+	(lobby.geo)			(astronaut1.cha)		(astronaut10.cha)
 */
 Transform* worldTransform;
 Transform* lobby2World;
 Geometry* lobby;
+std::vector<Transform*> astronaut2Worlds;	// all astronaut transforms
+std::vector<Character*> astronauts;			// all astronauts
+Transform* currentAstronaut2World;			// player's astronaut transform
+Character* currentAstronaut;				// player's astronaut 
 
-Cube* cube;
+// Frame files for astronauts
+vector<std::string> frameFiles
+{
+	"Models/amongus_astro_still.obj",
+	"Models/amongus_astro_moving1.obj",
+	"Models/amongus_astro_moving2.obj"
+};
+// Colors for astronauts
+vector<glm::vec3> colors
+{
+	glm::vec3((float)62 / 255, (float)71 / 255, (float)78 / 255),	// black
+	glm::vec3((float)19 / 255, (float)46 / 255, (float)209 / 255),	// blue
+	glm::vec3((float)113 / 255, (float)73 / 255, (float)29 / 255),	// brown
+	glm::vec3((float)57 / 255, (float)254 / 255, (float)221 / 255),	// cyan
+	glm::vec3((float)19 / 255, (float)128 / 255, (float)44 / 255),	// dark green
+	glm::vec3((float)78 / 255, (float)239 / 255, (float)56 / 255),	// lime
+	glm::vec3((float)241 / 255, (float)125 / 255, (float)12 / 255),	// orange
+	glm::vec3((float)236 / 255, (float)84 / 255, (float)187 / 255),	// pink
+	glm::vec3((float)108 / 255, (float)47 / 255, (float)188 / 255),	// purple
+	glm::vec3((float)197 / 255, (float)18 / 255, (float)17 / 255)	// red
+};
+
+// Other control boolean
+GLboolean is_rotating = false;
+
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -51,12 +79,11 @@ bool Window::initializeProgram() {
 		return false;
 	}
 
-	// Load shader for texture mapping
-	textureShader = LoadShaders("shaders/TextureObject.vert", "shaders/TextureObject.frag");
+	toonShadingShader = LoadShaders("shaders/ToonShading.vert", "shaders/ToonShading.frag");
 	// Check the shader program.
-	if (!textureShader)
+	if (!toonShadingShader)
 	{
-		std::cerr << "Failed to load TextureObject shader program" << std::endl;
+		std::cerr << "Failed to initialize ToonShading shader program" << std::endl;
 		return false;
 	}
 
@@ -65,20 +92,21 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
-	cube = new Cube(5.0);
-
 	// Initialize directional light
 	directionalLight = new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	// Initialize materials
-	lobbyMaterial = new Material(glm::vec3(0.2f, 0.2f, 0.2f),
+	lobbyMaterial = new Material(glm::vec3(0.8f, 0.8f, 0.8f),
+								glm::vec3(0.8f, 0.8f, 0.8f),
 								glm::vec3(0.5f, 0.5f, 0.5f),
-								glm::vec3(0.4f, 0.4f, 0.4f),
 								0.323f,
 								glm::vec3(1.0f, 1.0f, 1.0f));
 
+	// Initialize textures
+	lobbyTexture = loadTexture("Models/cse167f20-project4-lobby/amongus_lobby.png");
+
 	// Initialize a new Camera
-	camera = new Camera(glm::vec3(0.0f, 0.0f, 20.0f), 
+	camera = new Camera(glm::vec3(0.0f, 0.0f, 15.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f), 
 						-90.0f, 0.0f, 10.0f, 0.5f);
 
@@ -86,13 +114,17 @@ bool Window::initializeObjects()
 	worldTransform = new Transform();
 
 	// Initialize the lobby transform and attach lobby geometry to it
-	lobby2World = new Transform();
-	lobby = new Geometry("Models/cse167f20-project4-lobby/amongus_lobby.obj", LOAD_MODE2);
-	lobby->update(glm::rotate(-200.0f, glm::vec3(1.0f, 0.0f, 0.0f)));
-	lobby->useShader(objectShader);
-	lobby->useMaterial(lobbyMaterial);
-	lobby2World->addChild(lobby);
-	worldTransform->addChild(lobby2World);
+	//lobby2World = new Transform();
+	//lobby = new Geometry("Models/cse167f20-project4-lobby/amongus_lobby.obj", LOAD_MODE2);
+	//lobby->update(glm::rotate(-200.0f, glm::vec3(1.0f, 0.0f, 0.0f)));
+	//lobby->useShader(objectShader);
+	//lobby->useMaterial(lobbyMaterial);
+	//lobby->useTexture(lobbyTexture);
+	//lobby2World->addChild(lobby);
+	//worldTransform->addChild(lobby2World);
+
+	// Initialize astronauts' characters
+	initializeCharacters();
 
 	return true;
 }
@@ -100,12 +132,17 @@ bool Window::initializeObjects()
 void Window::cleanUp()
 {
 	// Delete Objects
-	delete camera;
 	delete directionalLight;
+	delete lobbyMaterial;
+	delete camera;
+	
+	delete worldTransform;
+	delete lobby2World;
+	delete lobby;
 
 	// Delete the shader program.
 	glDeleteProgram(objectShader);
-	glDeleteProgram(textureShader);
+	glDeleteProgram(toonShadingShader);
 }
 
 GLFWwindow* Window::createWindow(int width, int height)
@@ -209,11 +246,14 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(eyePos));
 	glUseProgram(0);
 
-	glUseProgram(textureShader);
-	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection* view));
+	glUseProgram(toonShadingShader);
+	glUniformMatrix4fv(glGetUniformLocation(toonShadingShader, "PV"), 1, false, glm::value_ptr(projection * view));
+	glUniform3fv(glGetUniformLocation(toonShadingShader, "eyePos"), 1, glm::value_ptr(eyePos));
 	glUseProgram(0);
 
+	// Send light information to shader
 	directionalLight->sendLightToShader(objectShader);
+	directionalLight->sendLightToShader(toonShadingShader);
 	
 	// Render the Scene Graph Tree
 	worldTransform->draw(glm::mat4(1));
@@ -253,12 +293,21 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
 void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-
+	// if the user is resizing the lobby object
+	worldTransform->update(glm::scale(glm::vec3(1.0f + yoffset * 0.02f)));
 }
 
 void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-
+	// detect whether user is rotating the lobby
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		is_rotating = true;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+	{
+		is_rotating = false;
+	}
 }
 
 void Window::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -269,12 +318,15 @@ void Window::cursor_position_callback(GLFWwindow* window, double xpos, double yp
 
 	xChange = cursor_pos.x - last_cursor_pos.x;
 	yChange = last_cursor_pos.y - cursor_pos.y;
-
-	camera->mouseControl(xChange, yChange);
+	
+	// if user is rotating the lobby
+	if(is_rotating)
+		worldTransform->update(glm::rotate(0.02f, 
+			glm::cross(trackBallMapping(last_cursor_pos), trackBallMapping(cursor_pos))));
 
 }
 
-glm::vec3 Window::ballMapping(glm::vec2 point)
+glm::vec3 Window::trackBallMapping(glm::vec2 point)
 {
 	// Mapping the mouse position from 2D to 3D unit sphere
 	glm::vec3 pos;
@@ -313,4 +365,54 @@ GLuint Window::loadTexture(std::string fileName)
 	}
 	stbi_image_free(data);
 	return textureID;
+}
+
+void Window::initializeCharacters()
+{
+	// Initialize properties to create basic materials for astronauts
+	glm::vec3 ambient = glm::vec3(0.8f, 0.8f, 0.8f);
+	glm::vec3 diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
+	glm::vec3 specular = glm::vec3(0.5f, 0.5f, 0.5f);
+	GLfloat shininess = 0.323f;
+
+	// Creat CHARACTER_NUM astronauts
+	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
+	{
+		// Initialize material for this astronaut
+		Material* material = new Material(ambient, diffuse, specular, shininess, colors[i]);
+
+		// Initialize the astronaut transform and attach character node to it
+		Transform* astronaut2World = new Transform();
+		Character* astronaut = new Character(frameFiles, LOAD_MODE2);
+		astronaut->update(glm::scale(glm::vec3(1.0f) * 0.15f));
+		if (i < 5)
+		{
+			float rotate_radius = ( glm::pi<float>() / 3) * ((float)(4 - i) / 5);
+			astronaut->update(glm::rotate(rotate_radius, glm::vec3(0.0f, 1.0f, 0.0f)));
+		}
+		else
+		{
+			float rotate_radius = -(glm::pi<float>() / 3) * ((float)(i - 5) / 5);
+			astronaut->update(glm::rotate(rotate_radius, glm::vec3(0.0f, 1.0f, 0.0f)));
+		}
+		astronaut->update(glm::translate(glm::vec3(1.6f * i - 8.0f, 0.0f, 0.0f)));
+
+		float posZ = 2.0f * sin(glm::pi<float>() * ((float)i / CHARACTER_NUM));
+		printf("%f ", 2.0f * sin(glm::pi<float>() * ((float)i / CHARACTER_NUM)));
+		astronaut->update(glm::translate(glm::vec3(0.0f, 0.0f, posZ)));
+
+		astronaut->useShader(toonShadingShader);
+		astronaut->useMaterial(material);
+
+		astronaut2World->addChild(astronaut);
+		worldTransform->addChild(astronaut2World);
+
+		astronauts.push_back(astronaut);
+		astronaut2Worlds.push_back(astronaut2World);
+	}
+
+	// set the player character
+	currentAstronaut2World = astronaut2Worlds[0];
+	currentAstronaut = astronauts[0];
+
 }

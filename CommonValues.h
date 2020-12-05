@@ -7,3 +7,5 @@ const int POINT_SIZE = 6;
 
 const int LOAD_MODE1 = 1;
 const int LOAD_MODE2 = 2;
+
+const unsigned int CHARACTER_NUM = 10;

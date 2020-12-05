@@ -22,13 +22,14 @@ struct Material
 
 in vec3 fragPos;
 in vec3 fragNormal;
+in vec2 texCoord;
 
 out vec4 fragColor;
 
+uniform vec3 eyePos;
+uniform sampler2D tex;
 uniform Material material;
 uniform DirectionalLight directionalLight;
-
-uniform vec3 eyePos;
 
 // Reference: https://www.udemy.com/course/graphics-with-modern-opengl/
 vec4 CalcLightByDirection(Light light, vec3 direction)
@@ -54,5 +55,5 @@ vec4 CalcDirectionalLight()
 
 void main()
 {
-	fragColor = CalcDirectionalLight();
+	fragColor = texture(tex, texCoord) * CalcDirectionalLight();
 }

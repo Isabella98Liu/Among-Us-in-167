@@ -16,6 +16,7 @@
 #include "Node.h"
 #include "Transform.h"
 #include "Geometry.h"
+#include "Character.h"
 
 #include "CommonValues.h"
 
@@ -43,7 +44,7 @@ public:
 
 	// Shader Program ID
 	static GLuint objectShader;
-	static GLuint textureShader;
+	static GLuint toonShadingShader;
 
 	// Constructors and Destructors
 	static bool initializeProgram();
@@ -64,9 +65,11 @@ public:
 	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 	static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
-	static glm::vec3 ballMapping(glm::vec2 start);
+	static glm::vec3 trackBallMapping(glm::vec2 start);
 
 	static GLuint loadTexture(std::string fileName);
+
+	static void initializeCharacters();
 
 	bool* getKeys() { return keys; }
 };
