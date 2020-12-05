@@ -1,6 +1,9 @@
 #include "Geometry.h"
 
-/* TODO: load uvs*/
+/* 
+	MODE 1 - f 1//1//1 2//2//2 3//3//3
+	MODE 2 - f 1/1/1 2/2/2 3/3/3
+	TODO: load uvs*/
 Geometry::Geometry(std::string objFilename, int mode)
 {
 	loadMode = mode;
@@ -105,7 +108,7 @@ void Geometry::loadMode2(std::string objFilename)
 	FILE* file = fopen(objFilename.c_str(), "r");
 	if (file == NULL) 
 	{
-		printf("Can not open the file : %s\n", objFilename);
+		printf("Can not open the file : %s\n", objFilename.c_str());
 		return;
 	}
 	char line[128];
@@ -186,8 +189,7 @@ Geometry::~Geometry()
 void Geometry::draw(glm::mat4 C)
 {
 	// Send material information to shader
-	// ----IMPORTANT----- needs to be sent before binding the VAO other wise it will be rendered on next material
-	if(material != NULL)
+	if (material != NULL)
 		material->sendMatToShader(shaderID);
 
 	// Actiavte the shader program 
@@ -218,7 +220,7 @@ void Geometry::draw(glm::mat4 C)
 	{
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 	}
-
+	
 	//Unbind
 	if (envMapping)
 		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -308,7 +310,7 @@ void Geometry::normalize()
 
 void Geometry::resize(double offset)
 {
-	model = glm::scale(glm::vec3(1.0f + offset * 0.02f)) * model;
+	model = glm::scale(glm::vec3(1.0f + (float)offset * 0.02f)) * model;
 }
 
 void Geometry::rescale(glm::vec3 scale)

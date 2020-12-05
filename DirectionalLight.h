@@ -1,21 +1,23 @@
 #pragma once
+
 #include "Light.h"
-#include "Geometry.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 class DirectionalLight : public Light
 {
 private:
 	glm::vec3 direction;	// direction of the directional light
-	Geometry* lightModel;		// the 3D visualized model for light
 
 public:
-	DirectionalLight(std::string objFilename, int loadMode, glm::vec3 lightColor, glm::vec3 lightDir);
+	DirectionalLight(glm::vec3 lightColor, glm::vec3 lightDir);
 	~DirectionalLight();
 
-	Geometry* getModel() { return lightModel; };
 
 	void sendLightToShader(const int shaderID);
 	
-	void translateLightModel(glm::vec3 translation);
 };
 

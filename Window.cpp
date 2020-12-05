@@ -13,9 +13,10 @@ GLfloat Window::yChange = 0.0f;
 GLfloat Window::deltaTime = 0.0f;
 GLfloat  Window::lastTime = 0.0f;
 
-// Lights, Textures
+// Lights, Textures, Materialss
 DirectionalLight* directionalLight;
-GLuint brickTexture;
+Material* lobbyMaterial;
+GLuint lobbyTexture;
 
 // Camera Matrices 
 Camera* Window::camera;
@@ -28,7 +29,17 @@ GLuint Window::objectShader;
 GLuint Window::textureShader;
 
 // Scene Graph
+/*
+						World
+				/			\		......		\
+	lobby2World			astronaut2World1		astronaut2World10
+	(lobby.geo)			(astronaut1.geo)		(astronaut10.geo)
+*/
 Transform* worldTransform;
+Transform* lobby2World;
+Geometry* lobby;
+
+Cube* cube;
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -54,17 +65,34 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
-	directionalLight = new DirectionalLight("Models/sphere.obj", 1, glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	cube = new Cube(5.0);
 
-	brickTexture = loadTexture("Textures/brick3.jpg");
+	// Initialize directional light
+	directionalLight = new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	// Initialize materials
+	lobbyMaterial = new Material(glm::vec3(0.2f, 0.2f, 0.2f),
+								glm::vec3(0.5f, 0.5f, 0.5f),
+								glm::vec3(0.4f, 0.4f, 0.4f),
+								0.323f,
+								glm::vec3(1.0f, 1.0f, 1.0f));
 
 	// Initialize a new Camera
-	camera = new Camera(glm::vec3(0.0f, 0.0f, 80.0f), 
+	camera = new Camera(glm::vec3(0.0f, 0.0f, 20.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f), 
 						-90.0f, 0.0f, 10.0f, 0.5f);
 
+	// Initialize the world transform
 	worldTransform = new Transform();
 
+	// Initialize the lobby transform and attach lobby geometry to it
+	lobby2World = new Transform();
+	lobby = new Geometry("Models/cse167f20-project4-lobby/amongus_lobby.obj", LOAD_MODE2);
+	lobby->update(glm::rotate(-200.0f, glm::vec3(1.0f, 0.0f, 0.0f)));
+	lobby->useShader(objectShader);
+	lobby->useMaterial(lobbyMaterial);
+	lobby2World->addChild(lobby);
+	worldTransform->addChild(lobby2World);
 
 	return true;
 }
@@ -179,6 +207,8 @@ void Window::displayCallback(GLFWwindow* window)
 	glUseProgram(objectShader);
 	glUniformMatrix4fv(glGetUniformLocation(objectShader, "PV"), 1, false, glm::value_ptr(projection * view));
 	glUniform3fv(glGetUniformLocation(objectShader, "eyePos"), 1, glm::value_ptr(eyePos));
+	glUseProgram(0);
+
 	glUseProgram(textureShader);
 	glUniformMatrix4fv(glGetUniformLocation(textureShader, "PV"), 1, false, glm::value_ptr(projection* view));
 	glUseProgram(0);
@@ -193,7 +223,6 @@ void Window::displayCallback(GLFWwindow* window)
 
 	// Swap buffers.
 	glfwSwapBuffers(window);
-
 }
 
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
