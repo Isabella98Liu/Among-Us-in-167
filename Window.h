@@ -34,11 +34,10 @@ public:
 	static bool keys[1024];
 	static glm::vec2 last_cursor_pos;
 	static glm::vec2 cursor_pos;
-
-	// Light objects
-	static DirectionalLight* directionalLight;
-	static PointLight* pointLight;
-	static SpotLight* spotLight;
+	static GLfloat xChange;
+	static GLfloat yChange;
+	static GLfloat deltaTime;
+	static GLfloat  lastTime;
 
 	// Camera Matrices
 	static Camera* camera;
@@ -48,13 +47,7 @@ public:
 
 	// Shader Program ID
 	static GLuint objectShader;
-	static GLuint skyBoxShader;
-	static GLuint envMapShader;
 	static GLuint textureShader;
-
-
-	// SkyBox
-	static SkyBox* skyBox;
 
 	// Constructors and Destructors
 	static bool initializeProgram();
@@ -77,15 +70,9 @@ public:
 
 	static glm::vec3 ballMapping(glm::vec2 start);
 
-	static Transform* initializeCarrousel();
-	static Transform* initializeGround();
-
-	static void loadFrameBuffer();
-	static void loadEnvTexture();
 	static GLuint loadTexture(std::string fileName);
 
 	bool* getKeys() { return keys; }
-	static void readVec3(float* f, glm::vec3 vector) { f[0] = vector.x; f[1] = vector.y; f[2] = vector.z;}
 };
 
 #endif
