@@ -27,8 +27,6 @@ private:
 	GLfloat moveSpeed;
 	GLfloat turnSpeed;
 
-	GLboolean isMirroring = false;
-
 public:
 	Camera(glm::vec3 startPosition, glm::vec3 startUp, GLfloat startYaw, GLfloat startPitch, GLfloat startMoveSpeed, GLfloat startTurnSpeed);
 	~Camera();
@@ -42,6 +40,5 @@ public:
 	glm::vec3 getPosition() { return position; }
 
 	void setYawPitch(GLfloat y, GLfloat p) { yaw = y; pitch = p;  update(); }
-	void setMirroring(GLboolean b) { isMirroring = b; }
 };
 

@@ -255,17 +255,16 @@ void Geometry::useTexture(GLuint id)
 	glBindVertexArray(0);
 }
 
+/* Update() is used for updating world coordinates, for local coordinates, we should update model instead*/
+
 void Geometry::update(glm::mat4 C)
 {
 	model = C * model;
 }
 
-
-
-void Geometry::spin(float deg)
+void Geometry::rotate(GLfloat deg, glm::vec3 axis)
 {
-	// Update the model matrix by multiplying a rotation matrix
-	model = glm::rotate(glm::radians(deg), glm::vec3(0.0f, 1.0f, 0.0f)) * model;
+	model = glm::rotate(deg, axis) * model;
 }
 
 void Geometry::normalize()
@@ -316,11 +315,6 @@ void Geometry::resize(double offset)
 void Geometry::rescale(glm::vec3 scale)
 {
 	model = glm::scale(scale) * model;
-}
-
-void Geometry::rotate(glm::vec3 start, glm::vec3 end)
-{
-	model = glm::rotate(0.02f, glm::cross(start, end)) * model;
 }
 
 void Geometry::translate(glm::vec3 translation)

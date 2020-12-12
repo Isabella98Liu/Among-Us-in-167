@@ -30,8 +30,8 @@ GLuint Window::toonShadingShader;
 
 // Scene Graph
 /*
-						World
-				/			\		......		\
+							World
+				/			  |		......		\
 	lobby2World			astronaut2World1		astronaut2World10
 	(lobby.geo)			(astronaut1.cha)		(astronaut10.cha)
 */
@@ -106,22 +106,21 @@ bool Window::initializeObjects()
 	lobbyTexture = loadTexture("Models/cse167f20-project4-lobby/amongus_lobby.png");
 
 	// Initialize a new Camera
-	camera = new Camera(glm::vec3(0.0f, 0.0f, 15.0f), 
+	camera = new Camera(glm::vec3(0.0f, 10.0f, 9.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f), 
-						-90.0f, 0.0f, 10.0f, 0.5f);
+						-90.0f, -45.0f, 10.0f, 0.5f);
 
 	// Initialize the world transform
 	worldTransform = new Transform();
 
 	// Initialize the lobby transform and attach lobby geometry to it
-	//lobby2World = new Transform();
-	//lobby = new Geometry("Models/cse167f20-project4-lobby/amongus_lobby.obj", LOAD_MODE2);
-	//lobby->update(glm::rotate(-200.0f, glm::vec3(1.0f, 0.0f, 0.0f)));
-	//lobby->useShader(objectShader);
-	//lobby->useMaterial(lobbyMaterial);
-	//lobby->useTexture(lobbyTexture);
-	//lobby2World->addChild(lobby);
-	//worldTransform->addChild(lobby2World);
+	lobby2World = new Transform();
+	lobby = new Geometry("Models/cse167f20-project4-lobby/amongus_lobby.obj", LOAD_MODE2);
+	lobby->useShader(objectShader);
+	lobby->useMaterial(lobbyMaterial);
+	lobby->useTexture(lobbyTexture);
+	lobby2World->addChild(lobby);
+	worldTransform->addChild(lobby2World);
 
 	// Initialize astronauts' characters
 	initializeCharacters();
@@ -139,6 +138,12 @@ void Window::cleanUp()
 	delete worldTransform;
 	delete lobby2World;
 	delete lobby;
+
+	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
+	{
+		delete astronaut2Worlds[i];
+		delete astronauts[i];
+	}
 
 	// Delete the shader program.
 	glDeleteProgram(objectShader);
@@ -231,8 +236,8 @@ void Window::displayCallback(GLFWwindow* window)
 	deltaTime = currentTime - lastTime;			// (currentTime - lastTime) * 1000 / SDL_GetPerformancefrequency();
 	lastTime = currentTime;
 
-	// Send keyboard input information to camera
-	camera->keyControl(keys, deltaTime);
+	// Send keyboard input information to player's character
+	currentAstronaut->keyControl(keys, deltaTime);
 
 	// Clear the color and depth buffers
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -294,12 +299,13 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	// if the user is resizing the lobby object
-	worldTransform->update(glm::scale(glm::vec3(1.0f + yoffset * 0.02f)));
+	float scale = 1.0f + yoffset * 0.02f;
+	worldTransform->update(glm::scale(glm::vec3(scale)));
 }
 
 void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-	// detect whether user is rotating the lobby
+	// detect whether user is pressing the left mouse button -> rotating the camera
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
 		is_rotating = true;
@@ -319,7 +325,7 @@ void Window::cursor_position_callback(GLFWwindow* window, double xpos, double yp
 	xChange = cursor_pos.x - last_cursor_pos.x;
 	yChange = last_cursor_pos.y - cursor_pos.y;
 	
-	// if user is rotating the lobby
+	// if user is rotating the camera
 	if(is_rotating)
 		worldTransform->update(glm::rotate(0.02f, 
 			glm::cross(trackBallMapping(last_cursor_pos), trackBallMapping(cursor_pos))));
@@ -384,22 +390,9 @@ void Window::initializeCharacters()
 		// Initialize the astronaut transform and attach character node to it
 		Transform* astronaut2World = new Transform();
 		Character* astronaut = new Character(frameFiles, LOAD_MODE2);
-		astronaut->update(glm::scale(glm::vec3(1.0f) * 0.15f));
-		if (i < 5)
-		{
-			float rotate_radius = ( glm::pi<float>() / 3) * ((float)(4 - i) / 5);
-			astronaut->update(glm::rotate(rotate_radius, glm::vec3(0.0f, 1.0f, 0.0f)));
-		}
-		else
-		{
-			float rotate_radius = -(glm::pi<float>() / 3) * ((float)(i - 5) / 5);
-			astronaut->update(glm::rotate(rotate_radius, glm::vec3(0.0f, 1.0f, 0.0f)));
-		}
-		astronaut->update(glm::translate(glm::vec3(1.6f * i - 8.0f, 0.0f, 0.0f)));
-
-		float posZ = 2.0f * sin(glm::pi<float>() * ((float)i / CHARACTER_NUM));
-		printf("%f ", 2.0f * sin(glm::pi<float>() * ((float)i / CHARACTER_NUM)));
-		astronaut->update(glm::translate(glm::vec3(0.0f, 0.0f, posZ)));
+		// Resize the initial model
+		astronaut->update(glm::scale(glm::vec3(1.0f) * 0.06f));
+		astronaut->setPosition(glm::vec3(1.6f * i, 0.0f, 0.0f));
 
 		astronaut->useShader(toonShadingShader);
 		astronaut->useMaterial(material);

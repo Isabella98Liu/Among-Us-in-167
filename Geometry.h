@@ -45,11 +45,10 @@ public:
     void useShader(GLuint id) { shaderID = id; }
     void useMaterial(Material* mat) { material = mat; }
 
-    void spin(float deg);
     void normalize();
     void resize(double offset);
     void rescale(glm::vec3 scale);
-    void rotate(glm::vec3 start, glm::vec3 end);
+    void rotate(GLfloat deg, glm::vec3 axis);
     void translate(glm::vec3 translation);
 
     glm::mat4 getModel() { return model; }

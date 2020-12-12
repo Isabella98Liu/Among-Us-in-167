@@ -50,8 +50,8 @@ void SpotLight::translateLightModel(glm::vec3 translation)
 
 void SpotLight::rotate(glm::vec3 start, glm::vec3 end)
 {
-	glm::vec3 axis = glm::cross(start, end);
+	glm::vec3 axis = glm::cross(glm::normalize(start), glm::normalize(end));;
 	glm::vec4 position_new = glm::rotate(0.02f, axis) * glm::vec4(position, 1.0f);
 	position = glm::vec3(position_new.x, position_new.y, position_new.z);
-	lightModel->rotate(start, end);
+	lightModel->rotate(0.02f, axis);
 }
