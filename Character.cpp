@@ -12,9 +12,6 @@ Character::Character(std::vector<std::string> frameFiles, int mode)
 	// Set the first frame as default frame
 	currentFrame = frames[0];
 
-	// Set move speed for the chatacter
-	moveSpeed = 0.8f;
-
 	// Set default position and directions
 	position = glm::vec3(0);
 	worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -23,6 +20,10 @@ Character::Character(std::vector<std::string> frameFiles, int mode)
 	front = glm::vec3(0.0f, 0.0f, -1.0f);
 	right = glm::normalize(glm::cross(front, up));
 	faceDir = glm::vec3(0.0f, 0.0f, 1.0f);
+
+	// Set the bouding circle for this character
+	boudingCircle = new Physics(BOUNDING_CIRCLE);
+	boudingCircle->updateCircle(position, bounding_radius);
 }
 
 Character::~Character()
@@ -32,6 +33,8 @@ Character::~Character()
 	{
 		delete frames[i];
 	}
+
+	delete boudingCircle;
 }
 
 void Character::draw(glm::mat4 C)
@@ -47,26 +50,19 @@ void Character::update(glm::mat4 C)
 	}
 }
 
-void Character::rotate(GLfloat deg, glm::vec3 axis)
-{
-	for (unsigned int i = 0; i < frames.size(); i++)
-	{
-		frames[i]->rotate(deg, axis);
-	}
-}
-
 void Character::setPosition(glm::vec3 pos)
 {
 	update(glm::translate(pos - position));
 	position = pos;
+	boudingCircle->updateCircle(position, bounding_radius);
 }
 
 void Character::move(glm::vec3 dir)
 {
-	// Check whether character is facing the direction it will move in
+	// If the character will move in a different direction than it's facing direction
 	if (int(glm::length(glm::normalize(dir) - glm::normalize(faceDir))) > 0)
 	{
-		// If move in different direction, rotate the character, translate it back to the origin and do the rotation
+		// Rotate the character, translate it back to the origin and do the rotation
 		update(glm::translate(-position));
 		
 		// Compute the angle of rotation
@@ -94,14 +90,55 @@ void Character::move(glm::vec3 dir)
 
 		// Translate back to the position
 		update(glm::translate(position));
+
+		// Change the facing direction
+		faceDir = glm::normalize(dir);
 	}
+
+
+	// if the chatacter is colliding with other objects, don't perform move unless current move step will eliminate its collision status
+	if (is_collision)
+	{
+		// check whether current step will release its collision status
+		position += dir;
+		boudingCircle->updateCircle(position, bounding_radius);
+
+		// check all the objects its colliding with
+		bool collide = false;
+		for (unsigned int i = 0; i < collide_objects.size(); i++)
+		{
+			if (boudingCircle->checkCircleCollision(collide_objects[i])) {
+				collide = true; 
+				break;
+			}
+		}
+	
+		// if this move will release the character from all its colliding objects, we accept current move
+		if (collide == false)
+		{
+			is_collision == false;
+			// clean the collide list
+			unsigned int collision_size = collide_objects.size();
+			for (unsigned int i = 0; i < collision_size; i++)
+				collide_objects.pop_back();
+		}
+
+		// reverse move
+		position -= dir;
+		boudingCircle->updateCircle(position, bounding_radius);
+	}
+
+	printf("Current colliding objects: %d\n", collide_objects.size());
+
+	// if we reject current move because it will cause further collision
+	if (is_collision)
+		return;
 
 	// Change the position and tranform
 	update(glm::translate(dir));
 	position += dir;
+	boudingCircle->updateCircle(position, bounding_radius);
 
-	// Change the facing direction
-	faceDir = glm::normalize(dir);
 }
 
 void Character::keyControl(bool* keys, GLfloat deltaTime)
@@ -147,4 +184,13 @@ void Character::useMaterial(Material* mat)
 	{
 		frames[i]->useMaterial(mat);
 	}
+}
+
+void Character::addCollisionPhysic(Physics* obj)
+{
+	// check if current collide objects list contains the element
+	if (std::find(collide_objects.begin(), collide_objects.end(), obj) != collide_objects.end())
+		return;
+	else
+		collide_objects.push_back(obj);
 }

@@ -113,6 +113,7 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="packages\glm.0.9.9.800\build\native\include\glm\detail\glm.cpp" />
+    <ClCompile Include="Physics.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -424,6 +425,7 @@
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\glut.h" />
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\glxew.h" />
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\wglew.h" />
+    <ClInclude Include="Physics.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="Window.h" />

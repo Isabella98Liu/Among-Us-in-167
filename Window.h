@@ -17,6 +17,7 @@
 #include "Transform.h"
 #include "Geometry.h"
 #include "Character.h"
+#include "Physics.h"
 
 #include "CommonValues.h"
 
@@ -70,6 +71,8 @@ public:
 	static GLuint loadTexture(std::string fileName);
 
 	static void initializeCharacters();
+	
+	static void collisionDetection();
 
 	bool* getKeys() { return keys; }
 };

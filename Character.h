@@ -12,6 +12,7 @@
 
 #include "Node.h"
 #include "Geometry.h"
+#include "Physics.h"
 
 #include <string>
 #include <vector>
@@ -22,13 +23,18 @@ private:
 	std::vector<Geometry*> frames;
 	Geometry* currentFrame;
 
+	Physics* boudingCircle;
+	GLfloat bounding_radius = 0.3f;
+	GLboolean is_collision = false;
+	std::vector<Physics*> collide_objects;
+
 	glm::vec3 position;
 	glm::vec3 front;
 	glm::vec3 right;
 	glm::vec3 up;
 	glm::vec3 worldUp;
 
-	GLfloat moveSpeed;
+	GLfloat moveSpeed = 2.0f;
 	glm::vec3 faceDir;
 
 	GLuint textureID = 0;
@@ -41,7 +47,6 @@ public:
 
 	void draw(glm::mat4 C);
 	void update(glm::mat4 C);
-	void rotate(GLfloat deg, glm::vec3 axis);
 	
 	glm::vec3 getPosition() { return position; }
 	void setPosition(glm::vec3 pos);
@@ -52,5 +57,10 @@ public:
 	void useShader(GLuint id);
 	void useMaterial(Material* mat);
 
+	Physics* getPhysics() { return boudingCircle; }
+
+	void setCollision() { is_collision = true; }
+	void releaseCollision() { is_collision = false; }
+	void addCollisionPhysic(Physics* obj);
 };
 

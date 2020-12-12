@@ -9,3 +9,7 @@ const int LOAD_MODE1 = 1;
 const int LOAD_MODE2 = 2;
 
 const unsigned int CHARACTER_NUM = 10;
+
+// Bounding volume types
+const int BOUNDING_CIRCLE = 0;
+const int BOUNDING_LINE = 1;
