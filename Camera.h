@@ -33,6 +33,7 @@ public:
 
 	void keyControl(bool* keys, GLfloat deltaTime);
 	void mouseControl(GLfloat xChange, GLfloat yChange);
+	void scrollControl(double xoffset, double yoffset);
 
 	glm::mat4 calculateViewMatrix();
 

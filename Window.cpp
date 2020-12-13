@@ -128,6 +128,9 @@ bool Window::initializeObjects()
 	// Initialize astronauts' characters
 	initializeCharacters();
 
+	// Initialize environment physic objects for collision detection
+	initializeEnvironmentCollision();
+
 	return true;
 }
 
@@ -239,6 +242,8 @@ void Window::displayCallback(GLFWwindow* window)
 	deltaTime = currentTime - lastTime;			// (currentTime - lastTime) * 1000 / SDL_GetPerformancefrequency();
 	lastTime = currentTime;
 
+	printf("%f\n", currentTime);
+
 	// Send keyboard input information to player's character
 	currentAstronaut->keyControl(keys, deltaTime);
 
@@ -301,9 +306,8 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 
 void Window::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	// if the user is resizing the lobby object
-	float scale = 1.0f + yoffset * 0.02f;
-	worldTransform->update(glm::scale(glm::vec3(scale)));
+	// if the user is zooming
+	camera->scrollControl(xoffset, yoffset);
 }
 
 void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -376,6 +380,7 @@ GLuint Window::loadTexture(std::string fileName)
 	return textureID;
 }
 
+
 void Window::initializeCharacters()
 {
 	// Initialize properties to create basic materials for astronauts
@@ -395,7 +400,7 @@ void Window::initializeCharacters()
 		Character* astronaut = new Character(frameFiles, LOAD_MODE2);
 		// Resize the initial model
 		astronaut->update(glm::scale(glm::vec3(1.0f) * 0.06f));
-		astronaut->setPosition(glm::vec3(1.6f * i, 0.0f, 0.0f));
+		astronaut->setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
 
 		astronaut->useShader(toonShadingShader);
 		astronaut->useMaterial(material);
@@ -418,5 +423,53 @@ void Window::initializeCharacters()
 			astronauts[i]->addCollisionPhysic(astronauts[j]->getPhysics());
 		for (unsigned int j = i+1; j < CHARACTER_NUM; j++)
 			astronauts[i]->addCollisionPhysic(astronauts[j]->getPhysics());
+	}
+}
+
+void Window::initializeEnvironmentCollision()
+{
+	glm::vec2 leftUp = glm::vec2(-6.0f, 0.0f);
+	glm::vec2 rightUp = glm::vec2(6.0f, 0.0f);
+	glm::vec2 leftMid = glm::vec2(-6.0f, 4.5f);
+	glm::vec2 rightMid = glm::vec2(6.0f, 4.5f);
+	glm::vec2 leftBottom = glm::vec2(-4.5f, 6.5f);
+	glm::vec2  rightBottom = glm::vec2(4.5f, 6.5f);
+
+	glm::vec2 leftCenter = glm::vec2(-3.5f, 2.6f);
+	glm::vec2 rightCenter = glm::vec2(4.0f, 1.3f);
+
+	// Up axis wall
+	Physics* upWall = new Physics(BOUNDING_LINE);
+	upWall->updateLine(leftUp, rightUp);
+
+	// Bottom axis wall
+	Physics* bottomWall = new Physics(BOUNDING_LINE);
+	bottomWall->updateLine(leftBottom, rightBottom);
+
+	// Left axis wall
+	Physics* leftWall = new Physics(BOUNDING_LINE);
+	leftWall->updateLine(leftUp, leftMid);
+
+	// Right axis wall
+	Physics* rightWall = new Physics(BOUNDING_LINE);
+	rightWall->updateLine(rightUp, rightMid);
+
+	// Left diag wall
+	Physics* leftDiagWall = new Physics(BOUNDING_LINE);
+	leftDiagWall->updateLine(leftMid, leftBottom);
+	
+	// Right diag wall
+	Physics* rightDiagWall = new Physics(BOUNDING_LINE);
+	rightDiagWall->updateLine(rightMid, rightBottom);
+
+	// Add these static physic objects to each astronauts physic objects list 
+	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
+	{
+		astronauts[i]->addCollisionPhysic(upWall);
+		astronauts[i]->addCollisionPhysic(bottomWall);
+		astronauts[i]->addCollisionPhysic(leftWall);
+		astronauts[i]->addCollisionPhysic(rightWall);
+		astronauts[i]->addCollisionPhysic(leftDiagWall);
+		astronauts[i]->addCollisionPhysic(rightDiagWall);
 	}
 }

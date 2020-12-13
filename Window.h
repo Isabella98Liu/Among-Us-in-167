@@ -70,7 +70,10 @@ public:
 
 	static GLuint loadTexture(std::string fileName);
 
+	//static void initializePlayer();
+	//static void 
 	static void initializeCharacters();
+	static void initializeEnvironmentCollision();
 
 	bool* getKeys() { return keys; }
 };

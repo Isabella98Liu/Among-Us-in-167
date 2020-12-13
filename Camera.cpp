@@ -60,6 +60,14 @@ void Camera::mouseControl(GLfloat xChange, GLfloat yChange)
 	update();
 }
 
+void Camera::scrollControl(double xoffset, double yoffset)
+{
+	// zoom in the center direction
+	float scale = yoffset * 0.02f;
+	glm::vec3 dir = glm::vec3(0) - position;
+	position += scale * dir;
+}
+
 void Camera::update()
 {
 	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));

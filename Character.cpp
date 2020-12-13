@@ -54,7 +54,7 @@ void Character::setPosition(glm::vec3 pos)
 {
 	update(glm::translate(pos - position));
 	position = pos;
-	boudingCircle->updateCircle(position, bounding_radius);
+	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 }
 
 void Character::move(glm::vec3 dir)
@@ -106,6 +106,8 @@ void Character::move(glm::vec3 dir)
 		boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 		return;
 	}
+
+	//printf("( %f %f %f )\n", position.x, position.y, position.z);
 	// if no collision is about to happen, accept the move
 	update(glm::translate(dir));
 }

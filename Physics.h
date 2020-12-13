@@ -38,5 +38,7 @@ public:
 
 	glm::vec2 getCenter() { return center; }
 	GLfloat getRadius() { return radius; }
+	glm::vec2 getStartPoint() { return start; }
+	glm::vec2 getEndPoint() { return end; }
 };
 

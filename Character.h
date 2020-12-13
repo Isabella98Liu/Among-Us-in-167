@@ -35,7 +35,7 @@ private:
 	glm::vec3 up;
 	glm::vec3 worldUp;
 
-	GLfloat moveSpeed = 1.0f;
+	GLfloat moveSpeed = 2.0f;
 	glm::vec3 faceDir;
 
 	GLuint textureID = 0;
