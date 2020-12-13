@@ -229,7 +229,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-	collisionDetection();
+
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -411,28 +411,12 @@ void Window::initializeCharacters()
 	currentAstronaut2World = astronaut2Worlds[0];
 	currentAstronaut = astronauts[0];
 
-}
-
-void Window::collisionDetection()
-{
-	// First check the collision between astronauts
-	for (unsigned int i = 0; i < astronauts.size(); i++)
+	// Add other astronaurs physics to collision detect list
+	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
 	{
-		for (unsigned int j = i + 1; j < astronauts.size(); j++)
-		{
-			Physics* circle1 = astronauts[i]->getPhysics();
-			Physics* circle2 = astronauts[j]->getPhysics();
-
-			// if the two bounding circle collide with each other, mark collision
-			// add physics to each other's collide list
-			if(circle1->checkCircleCollision(circle2))
-			{
-				astronauts[i]->setCollision();
-				astronauts[i]->addCollisionPhysic(circle2);
-				astronauts[j]->setCollision();
-				astronauts[j]->addCollisionPhysic(circle1);
-			}
-			
-		}
+		for (unsigned int j = 0; j < i; j++)
+			astronauts[i]->addCollisionPhysic(astronauts[j]->getPhysics());
+		for (unsigned int j = i+1; j < CHARACTER_NUM; j++)
+			astronauts[i]->addCollisionPhysic(astronauts[j]->getPhysics());
 	}
 }

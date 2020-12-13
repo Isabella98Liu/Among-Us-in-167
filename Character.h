@@ -27,6 +27,7 @@ private:
 	GLfloat bounding_radius = 0.3f;
 	GLboolean is_collision = false;
 	std::vector<Physics*> collide_objects;
+	std::vector<Physics*> physic_objects;
 
 	glm::vec3 position;
 	glm::vec3 front;
@@ -34,7 +35,7 @@ private:
 	glm::vec3 up;
 	glm::vec3 worldUp;
 
-	GLfloat moveSpeed = 2.0f;
+	GLfloat moveSpeed = 1.0f;
 	glm::vec3 faceDir;
 
 	GLuint textureID = 0;
@@ -61,6 +62,8 @@ public:
 
 	void setCollision() { is_collision = true; }
 	void releaseCollision() { is_collision = false; }
-	void addCollisionPhysic(Physics* obj);
+	void addCollisionPhysic(Physics* obj) { physic_objects.push_back(obj); }
+
+	GLboolean detectCollision();
 };
 

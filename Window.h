@@ -71,8 +71,6 @@ public:
 	static GLuint loadTexture(std::string fileName);
 
 	static void initializeCharacters();
-	
-	static void collisionDetection();
 
 	bool* getKeys() { return keys; }
 };

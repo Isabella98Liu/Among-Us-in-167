@@ -23,7 +23,7 @@ Character::Character(std::vector<std::string> frameFiles, int mode)
 
 	// Set the bouding circle for this character
 	boudingCircle = new Physics(BOUNDING_CIRCLE);
-	boudingCircle->updateCircle(position, bounding_radius);
+	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 }
 
 Character::~Character()
@@ -95,50 +95,19 @@ void Character::move(glm::vec3 dir)
 		faceDir = glm::normalize(dir);
 	}
 
-
-	// if the chatacter is colliding with other objects, don't perform move unless current move step will eliminate its collision status
-	if (is_collision)
-	{
-		// check whether current step will release its collision status
-		position += dir;
-		boudingCircle->updateCircle(position, bounding_radius);
-
-		// check all the objects its colliding with
-		bool collide = false;
-		for (unsigned int i = 0; i < collide_objects.size(); i++)
-		{
-			if (boudingCircle->checkCircleCollision(collide_objects[i])) {
-				collide = true; 
-				break;
-			}
-		}
-	
-		// if this move will release the character from all its colliding objects, we accept current move
-		if (collide == false)
-		{
-			is_collision == false;
-			// clean the collide list
-			unsigned int collision_size = collide_objects.size();
-			for (unsigned int i = 0; i < collision_size; i++)
-				collide_objects.pop_back();
-		}
-
-		// reverse move
-		position -= dir;
-		boudingCircle->updateCircle(position, bounding_radius);
-	}
-
-	printf("Current colliding objects: %d\n", collide_objects.size());
-
-	// if we reject current move because it will cause further collision
-	if (is_collision)
-		return;
-
-	// Change the position and tranform
-	update(glm::translate(dir));
+	// Check whether current step will release its collision status
 	position += dir;
-	boudingCircle->updateCircle(position, bounding_radius);
-
+	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
+	// if a collision will happen with current move, reverse move and cease
+	if (detectCollision())
+	{
+		printf("A collision will happen, cease the move!\n");
+		position -= dir;
+		boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
+		return;
+	}
+	// if no collision is about to happen, accept the move
+	update(glm::translate(dir));
 }
 
 void Character::keyControl(bool* keys, GLfloat deltaTime)
@@ -186,11 +155,13 @@ void Character::useMaterial(Material* mat)
 	}
 }
 
-void Character::addCollisionPhysic(Physics* obj)
+GLboolean Character::detectCollision()
 {
-	// check if current collide objects list contains the element
-	if (std::find(collide_objects.begin(), collide_objects.end(), obj) != collide_objects.end())
-		return;
-	else
-		collide_objects.push_back(obj);
+	// detect whether the character collide with any other physic objects
+	for (unsigned int i = 0; i < physic_objects.size(); i++)
+	{
+		if (boudingCircle->detectCollision(physic_objects[i]))
+			return true;
+	}
+	return false;
 }

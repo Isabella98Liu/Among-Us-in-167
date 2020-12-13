@@ -15,7 +15,6 @@
 class Physics
 {
 private:
-	int bounding_volume_type = -1;	// type of the bounding volumn
 
 	// properties for bounding circle / sphere in 2d
 	glm::vec2 center = glm::vec2(0.0f);
@@ -26,13 +25,16 @@ private:
 	glm::vec2 end = glm::vec2(0.0f);
 
 public:
+
 	Physics(int type);
 	~Physics();
+
+	int bounding_volume_type = -1;	// type of the bounding volumn
 	
 	void updateCircle(glm::vec2 c, GLfloat r) { center = c; radius = r; }
 	void updateLine(glm::vec2 s, glm::vec2 e) { start = s; end = e; }
 
-	GLboolean checkCircleCollision(Physics* circle2);
+	GLboolean detectCollision(Physics* obj);
 
 	glm::vec2 getCenter() { return center; }
 	GLfloat getRadius() { return radius; }
