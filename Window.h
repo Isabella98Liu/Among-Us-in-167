@@ -70,12 +70,17 @@ public:
 
 	static GLuint loadTexture(std::string fileName);
 
-	//static void initializePlayer();
-	//static void 
-	static void initializeCharacters();
+	static void initializePlayer();
 	static void initializeEnvironmentCollision();
+	static void addEnvironmentCollision(Character* character);
+
+	static void nonPlayerControl(GLfloat deltaTime);
+
+	static void generateCharacter(int type);
 
 	bool* getKeys() { return keys; }
+	static GLfloat getRandFloat(int min, int max) { return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min))); }
+	static glm::vec2 getRandPoint(int x_min, int x_max, int y_min, int y_max) { return glm::vec2(getRandFloat(x_min, x_max), getRandFloat(y_min, y_max)); }
 };
 
 #endif

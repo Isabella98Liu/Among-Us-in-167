@@ -51,7 +51,7 @@ vector<std::string> frameFiles
 	"Models/amongus_astro_moving2.obj"
 };
 // Colors for astronauts
-vector<glm::vec3> colors
+vector<glm::vec3> colorList
 {
 	glm::vec3((float)62 / 255, (float)71 / 255, (float)78 / 255),	// black
 	glm::vec3((float)19 / 255, (float)46 / 255, (float)209 / 255),	// blue
@@ -65,12 +65,21 @@ vector<glm::vec3> colors
 	glm::vec3((float)197 / 255, (float)18 / 255, (float)17 / 255)	// red
 };
 
+// Material properties to create astronauts
+glm::vec3 astronaut_ambient = glm::vec3(0.8f, 0.8f, 0.8f);
+glm::vec3 astronaut_diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
+glm::vec3 astronaut_specular = glm::vec3(0.5f, 0.5f, 0.5f);
+GLfloat astronaut_shininess = 0.323f;
+
 // Other control boolean
 GLboolean is_rotating = false;
 
 // Collision detection
 std::vector<Physics*> movable_physics;
-std::vector<Physics*> ststic_physics;
+std::vector<Physics*> static_physics;
+
+// Bot control
+GLfloat wait_time = 0.0f;	// wait time to generate next astronaut
 
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
@@ -124,12 +133,12 @@ bool Window::initializeObjects()
 	lobby->useTexture(lobbyTexture);
 	lobby2World->addChild(lobby);
 	worldTransform->addChild(lobby2World);
-
-	// Initialize astronauts' characters
-	initializeCharacters();
-
+	
 	// Initialize environment physic objects for collision detection
 	initializeEnvironmentCollision();
+
+	// Initialize astronauts' characters
+	initializePlayer();
 
 	return true;
 }
@@ -145,10 +154,15 @@ void Window::cleanUp()
 	delete lobby2World;
 	delete lobby;
 
-	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
+	for (unsigned int i = 0; i < astronauts.size(); i++)
 	{
 		delete astronaut2Worlds[i];
 		delete astronauts[i];
+	}
+
+	for (unsigned int i = 0; i < static_physics.size(); i++)
+	{
+		delete static_physics[i];
 	}
 
 	// Delete the shader program.
@@ -232,7 +246,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 
 void Window::idleCallback()
 {
-
+	nonPlayerControl(deltaTime);
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -241,8 +255,6 @@ void Window::displayCallback(GLFWwindow* window)
 	GLfloat currentTime = (GLfloat)glfwGetTime();		// SDL_GetPerformanceCounter()
 	deltaTime = currentTime - lastTime;			// (currentTime - lastTime) * 1000 / SDL_GetPerformancefrequency();
 	lastTime = currentTime;
-
-	printf("%f\n", currentTime);
 
 	// Send keyboard input information to player's character
 	currentAstronaut->keyControl(keys, deltaTime);
@@ -380,50 +392,11 @@ GLuint Window::loadTexture(std::string fileName)
 	return textureID;
 }
 
-
-void Window::initializeCharacters()
+void Window::initializePlayer()
 {
-	// Initialize properties to create basic materials for astronauts
-	glm::vec3 ambient = glm::vec3(0.8f, 0.8f, 0.8f);
-	glm::vec3 diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
-	glm::vec3 specular = glm::vec3(0.5f, 0.5f, 0.5f);
-	GLfloat shininess = 0.323f;
+	// generate a new character as player
+	generateCharacter(CHARACTER_PLAYER);
 
-	// Creat CHARACTER_NUM astronauts
-	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
-	{
-		// Initialize material for this astronaut
-		Material* material = new Material(ambient, diffuse, specular, shininess, colors[i]);
-
-		// Initialize the astronaut transform and attach character node to it
-		Transform* astronaut2World = new Transform();
-		Character* astronaut = new Character(frameFiles, LOAD_MODE2);
-		// Resize the initial model
-		astronaut->update(glm::scale(glm::vec3(1.0f) * 0.06f));
-		astronaut->setPosition(glm::vec3(0.0f, 0.0f, 4.0f));
-
-		astronaut->useShader(toonShadingShader);
-		astronaut->useMaterial(material);
-
-		astronaut2World->addChild(astronaut);
-		worldTransform->addChild(astronaut2World);
-
-		astronauts.push_back(astronaut);
-		astronaut2Worlds.push_back(astronaut2World);
-	}
-
-	// set the player character
-	currentAstronaut2World = astronaut2Worlds[0];
-	currentAstronaut = astronauts[0];
-
-	// Add other astronaurs physics to collision detect list
-	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
-	{
-		for (unsigned int j = 0; j < i; j++)
-			astronauts[i]->addCollisionPhysic(astronauts[j]->getPhysics());
-		for (unsigned int j = i+1; j < CHARACTER_NUM; j++)
-			astronauts[i]->addCollisionPhysic(astronauts[j]->getPhysics());
-	}
 }
 
 void Window::initializeEnvironmentCollision()
@@ -462,14 +435,137 @@ void Window::initializeEnvironmentCollision()
 	Physics* rightDiagWall = new Physics(BOUNDING_LINE);
 	rightDiagWall->updateLine(rightMid, rightBottom);
 
-	// Add these static physic objects to each astronauts physic objects list 
-	for (unsigned int i = 0; i < CHARACTER_NUM; i++)
+	static_physics.push_back(upWall);
+	static_physics.push_back(bottomWall);
+	static_physics.push_back(leftWall);
+	static_physics.push_back(rightWall);
+	static_physics.push_back(leftDiagWall);
+	static_physics.push_back(rightDiagWall);
+}
+
+void Window::addEnvironmentCollision(Character* character)
+{
+	// Add  static physic objects to the character astronauts physic objects  
+	for (unsigned int i = 0; i < static_physics.size(); i++)
 	{
-		astronauts[i]->addCollisionPhysic(upWall);
-		astronauts[i]->addCollisionPhysic(bottomWall);
-		astronauts[i]->addCollisionPhysic(leftWall);
-		astronauts[i]->addCollisionPhysic(rightWall);
-		astronauts[i]->addCollisionPhysic(leftDiagWall);
-		astronauts[i]->addCollisionPhysic(rightDiagWall);
+		character->addCollisionPhysic(static_physics[i]);
 	}
+}
+
+void Window::nonPlayerControl(GLfloat deltaTime)
+{
+	// Loop through each non player and check life cycle, destroy if needed
+	// non-player are stored in [1..9] of astronauts
+	std::vector<int> destroy_list;
+	for (unsigned int i = 1; i < astronauts.size(); i++)
+	{
+		GLfloat lifeCycle = astronauts[i]->getLifeCycle();
+		lifeCycle -= deltaTime;
+		astronauts[i]->setLifeCycle(lifeCycle);
+
+		if (lifeCycle <= 0.0f)
+		{
+			// if reach the life cycle limit, record the index and destroy the non player later
+			destroy_list.push_back(i);
+			printf("\n ADD one character to destroy list\n");
+		}
+	}
+
+
+	// Destroy non players that have reach its end of life cycle
+	for (unsigned int i = 0; i < destroy_list.size(); i++)
+	{
+		int index = destroy_list[i];
+
+		printf("\n Astronauts %d should be destroyed.\n", index);
+
+		// delete collision object from other player's list
+		for (unsigned int j = 0; j < astronauts.size(); j++)
+			astronauts[j]->deleteCollisionPhysic(astronauts[index]->getPhysics());
+		
+		// delete from worldTransform as well as from atronauts list
+		worldTransform->deleteChild(astronaut2Worlds[index]);
+		delete astronauts[index];
+		delete astronaut2Worlds[index];
+		astronauts.erase(astronauts.begin() + index);
+		astronaut2Worlds.erase(astronaut2Worlds.begin() + index);
+	}
+
+	// If there are less than CHARACTER_NUM astronauts, produce new astronaut in WAIT_TIME
+	if (astronauts.size() < 10)
+	{
+		if (wait_time - deltaTime > 0)
+			wait_time -= deltaTime;
+		else
+		{
+			// if it's time to generate a new astroanut
+			generateCharacter(CHARACTER_BOT);
+		}
+	}
+}
+
+void Window::generateCharacter(int type)
+{
+	// Create material for new astronaut
+	glm::vec3 color = colorList[astronauts.size()];
+	Material* material = new Material(astronaut_ambient, astronaut_diffuse, astronaut_specular, astronaut_shininess, color);
+	// Initialize the astronaut transform and attach character node to it
+	Transform* astronaut2World = new Transform();
+	Character* astronaut = new Character(frameFiles, LOAD_MODE2);
+	// Resize the initial model
+	astronaut->update(glm::scale(glm::vec3(1.0f) * 0.06f));
+
+	astronaut->useShader(toonShadingShader);
+	astronaut->useMaterial(material);
+	astronaut2World->addChild(astronaut);
+
+	// add static physics objects to bot
+	addEnvironmentCollision(astronaut);
+
+	// add other characters bouding sphere to this one and this one to other characters
+	for (unsigned int i = 0; i < astronauts.size(); i++)
+	{
+		astronaut->addCollisionPhysic(astronauts[i]->getPhysics());
+		astronauts[i]->addCollisionPhysic(astronaut->getPhysics());
+	}
+
+	// set character to a randome point in the scene, detect collision at first, if failed keep produce new point
+	glm::vec2 randPoint = getRandPoint(-5, 5, 0, 5);
+	glm::vec3 randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
+	printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
+
+	GLboolean res = false;
+	while (!res)
+	{
+		res = astronaut->setPosition(randPos);
+		randPoint = getRandPoint(-6, 6, 0, 6);
+		randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
+		printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
+	}
+
+	// if this character is a bot, set life cycle and stop gap 
+	if (type == CHARACTER_BOT)
+	{
+		GLfloat lifeCycle = getRandFloat(LIFE_TIME_MIN, LIFE_TIME_MAX);
+		astronaut->setLifeCycle(lifeCycle);
+		GLfloat stopGap = getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX);
+		astronaut->setStopGap(stopGap);
+		printf("Life Cycle: %f, Stop Gap: %f\n", lifeCycle, stopGap);
+	}
+	else if (type == CHARACTER_PLAYER)
+	{
+		// set the player character
+		currentAstronaut2World = astronaut2World;
+		currentAstronaut = astronaut;
+	}
+
+	// add successfully created character to the world
+	worldTransform->addChild(astronaut2World);
+	astronauts.push_back(astronaut);
+	astronaut2Worlds.push_back(astronaut2World);
+
+
+	// set wait time to generate next astronaut
+	wait_time = getRandFloat(WAIT_TIME_MIN, WAIT_TIME_MAX);
+	printf("Set new generation in %f\n\n", wait_time);
 }

@@ -50,11 +50,24 @@ void Character::update(glm::mat4 C)
 	}
 }
 
-void Character::setPosition(glm::vec3 pos)
+GLboolean Character::setPosition(glm::vec3 pos)
 {
-	update(glm::translate(pos - position));
+	// detect collision before set new position
+	glm::vec3 old_position = position;
 	position = pos;
 	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
+	// if a collision will happen in this position, reverse and cease
+	if (detectCollision())
+	{
+		printf("A collision will happen if you set this position\n");
+		position = glm::vec3(0);
+		boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
+		return false;
+	}
+
+	// if no collision will happen, accept the new position
+	update(glm::translate(position - old_position));
+	return true;
 }
 
 void Character::move(glm::vec3 dir)
@@ -101,7 +114,7 @@ void Character::move(glm::vec3 dir)
 	// if a collision will happen with current move, reverse move and cease
 	if (detectCollision())
 	{
-		printf("A collision will happen, cease the move!\n");
+		//printf("A collision will happen, cease the move!\n");
 		position -= dir;
 		boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 		return;
@@ -155,6 +168,19 @@ void Character::useMaterial(Material* mat)
 	{
 		frames[i]->useMaterial(mat);
 	}
+}
+
+void Character::deleteCollisionPhysic(Physics* obj)
+{
+	// delete the obj if it is in physic_objects
+	int position = -1;
+	for (unsigned int i = 0; i < physic_objects.size(); i++)
+	{
+		if (physic_objects[i] == obj)
+			position = i;
+	}
+	if (position != -1)
+		physic_objects.erase(physic_objects.begin() + position);
 }
 
 GLboolean Character::detectCollision()

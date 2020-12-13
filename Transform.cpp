@@ -37,3 +37,15 @@ void Transform::addChilds(std::vector<Transform*> child)
 		childs.push_back(child[i]);
 	}
 }
+
+void Transform::deleteChild(Node* child)
+{
+	int position = -1;
+	for (unsigned int i = 0; i < childs.size(); i++)
+	{
+		if (childs[i] == child)
+			position = i;
+	}
+	if (position != -1)
+		childs.erase(childs.begin() + position);
+}

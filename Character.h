@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>    // std::find
 
 class Character : public Node
 {
@@ -26,7 +27,6 @@ private:
 	Physics* boudingCircle;
 	GLfloat bounding_radius = 0.3f;
 	GLboolean is_collision = false;
-	std::vector<Physics*> collide_objects;
 	std::vector<Physics*> physic_objects;
 
 	glm::vec3 position;
@@ -37,6 +37,10 @@ private:
 
 	GLfloat moveSpeed = 2.0f;
 	glm::vec3 faceDir;
+
+	// Bot control
+	GLfloat lifeCycle = 0.0f;
+	GLfloat stopGap = 0.0f;
 
 	GLuint textureID = 0;
 	GLuint shaderID = 0;
@@ -50,7 +54,7 @@ public:
 	void update(glm::mat4 C);
 	
 	glm::vec3 getPosition() { return position; }
-	void setPosition(glm::vec3 pos);
+	GLboolean setPosition(glm::vec3 pos);
 	void move(glm::vec3 dir);
 	void keyControl(bool* keys, GLfloat deltaTime);
 
@@ -63,7 +67,11 @@ public:
 	void setCollision() { is_collision = true; }
 	void releaseCollision() { is_collision = false; }
 	void addCollisionPhysic(Physics* obj) { physic_objects.push_back(obj); }
-
+	void deleteCollisionPhysic(Physics* obj);
 	GLboolean detectCollision();
+
+	GLfloat getLifeCycle() { return lifeCycle; }
+	void setLifeCycle(GLfloat l) { lifeCycle = l; }
+	void setStopGap(GLfloat s) { stopGap = s; }
 };
 

@@ -21,6 +21,7 @@ public:
 
     void addChild(Node* child);
     void addChilds(std::vector<Transform*> child);
+    void deleteChild(Node* child);
 
     int getSize() { return childs.size(); }
 };
