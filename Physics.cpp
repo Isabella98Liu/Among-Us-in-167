@@ -1,8 +1,9 @@
 #include "Physics.h"
 
-Physics::Physics(int type)
+Physics::Physics(int type, Character* c)
 {
 	bounding_volume_type = type;
+	character = c;
 }
 
 Physics::~Physics()

@@ -41,6 +41,7 @@ private:
 	// Bot control
 	GLfloat lifeCycle = 0.0f;
 	GLfloat stopGap = 0.0f;
+	int status = 0;
 
 	GLuint textureID = 0;
 	GLuint shaderID = 0;
@@ -69,10 +70,23 @@ public:
 	void releaseCollision() { is_collision = false; }
 	void addCollisionPhysic(Physics* obj) { physic_objects.push_back(obj); }
 	void deleteCollisionPhysic(Physics* obj);
-	GLboolean detectCollision();
+	Physics* detectCollision();
+
+	void botMove(GLfloat deltaTime);
+	void botBounce(Physics* obj, int flag);
+	glm::vec3 getPlaneBounceDirection(glm::vec3 normal, glm::vec3 moveDir);
 
 	GLfloat getLifeCycle() { return lifeCycle; }
 	void setLifeCycle(GLfloat l) { lifeCycle = l; }
+	GLfloat getStopGap() { return stopGap; }
 	void setStopGap(GLfloat s) { stopGap = s; }
+	int getStatus() { return status; }
+	void setStatus(const int s) { status = s; }
+	void setFaceDir(glm::vec3 dir) { faceToMoveDirection(dir); }
+
+	GLfloat getRandFloat(int min, int max) { return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min))); }
+	glm::vec2 getRandPoint(int x_min, int x_max, int y_min, int y_max) { return glm::vec2(getRandFloat(x_min, x_max), getRandFloat(y_min, y_max)); }
+
+	void faceToMoveDirection(glm::vec3 dir);
 };
 

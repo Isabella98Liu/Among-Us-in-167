@@ -76,6 +76,7 @@ public:
 	static void addEnvironmentCollision(Character* character);
 
 	static void nonPlayerControl(GLfloat deltaTime);
+	static void nonPlayerMovement(GLfloat deltaTime);
 
 	static void generateCharacter(int type);
 	static void deleteCharacter(int index);

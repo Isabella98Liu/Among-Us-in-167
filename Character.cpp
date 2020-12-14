@@ -22,7 +22,7 @@ Character::Character(std::vector<std::string> frameFiles, int mode)
 	faceDir = glm::vec3(0.0f, 0.0f, 1.0f);
 
 	// Set the bouding circle for this character
-	boudingCircle = new Physics(BOUNDING_CIRCLE);
+	boudingCircle = new Physics(BOUNDING_CIRCLE, this);
 	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 }
 
@@ -59,7 +59,7 @@ GLboolean Character::setPosition(glm::vec3 pos)
 	// if a collision will happen in this position, reverse and cease
 	if (detectCollision())
 	{
-		printf("A collision will happen if you set this position\n");
+		//printf("A collision will happen if you set this position\n");
 		position = glm::vec3(0);
 		boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 		return false;
@@ -72,32 +72,8 @@ GLboolean Character::setPosition(glm::vec3 pos)
 
 void Character::move(glm::vec3 dir)
 {
-	// If the character will move in a different direction than it's facing direction
-	if (int(glm::length(glm::normalize(dir) - glm::normalize(faceDir))) > 0)
-	{
-		// Rotate the character, translate it back to the origin and do the rotation
-		update(glm::translate(-position));
-		
-		// Compute the angle of rotation
-		GLfloat angle_radians = acos(glm::dot(glm::normalize(dir), glm::normalize(faceDir)));
-		// Decide CW or CCW for rotation
-		glm::vec3 face_rotated = glm::rotate(angle_radians, worldUp) * glm::vec4(faceDir, 1.0f);
-
-		// If we should rotate CW
-		float distance = ((float)glm::length(glm::normalize(face_rotated) - glm::normalize(dir)));
-		if (distance > 0.001f)
-		{
-			angle_radians *= -1;
-		}
-
-		update(glm::rotate(angle_radians, worldUp));
-
-		// Translate back to the position
-		update(glm::translate(position));
-
-		// Change the facing direction
-		faceDir = glm::normalize(dir);
-	}
+	// rotate to the moving direction
+	faceToMoveDirection(dir);
 
 	// Check whether current step will release its collision status
 	position += dir;
@@ -174,13 +150,121 @@ void Character::deleteCollisionPhysic(Physics* obj)
 		physic_objects.erase(physic_objects.begin() + position);
 }
 
-GLboolean Character::detectCollision()
+Physics* Character::detectCollision()
 {
 	// detect whether the character collide with any other physic objects
 	for (unsigned int i = 0; i < physic_objects.size(); i++)
 	{
 		if (boudingCircle->detectCollision(physic_objects[i]))
-			return true;
+			return physic_objects[i];
 	}
-	return false;
+	return NULL;
+}
+
+void Character::botMove(GLfloat deltaTime)
+{
+	GLfloat velocity = moveSpeed * deltaTime;
+	glm::vec3 dir = faceDir * velocity;
+	update(glm::translate(dir));
+
+	// if a collision will happen, perform bounce, set a new random faceDir, else just move the bot
+	position += dir;
+	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
+	Physics* bounceObj = detectCollision();
+	if (bounceObj)
+	{
+		botBounce(bounceObj, 1);
+	}
+}
+
+void Character::botBounce(Physics* obj, int flag)
+{
+	// if this bot is sleeping, treat it as a static object
+	if (status == SLEEP)
+		return;
+	
+	glm::vec3 normal = glm::vec3(0);
+
+	// if bounced with a plane
+	if (obj->getType() == BOUNDING_LINE)
+		normal = obj->getNormal();
+	else if (obj->getType() == BOUNDING_CIRCLE)
+	{
+		// if bounced with a circle, the normal is the vector between centers
+		glm::vec2 normal2d = glm::normalize(boudingCircle->getCenter() - obj->getCenter());
+		normal = glm::vec3(normal2d.x, 0, normal2d.y);
+		printf("%d\n", obj->getCharacter());
+		// also send the bounce information to the other obj, flag make sure there is no deadlock
+		if(flag == 1)
+			obj->getCharacter()->botBounce(this->boudingCircle, 2);
+	}
+	
+	// get the reflection direction
+	glm::vec3 bounceDir = getPlaneBounceDirection(normal, faceDir);
+
+	//printf("bounceDir: ( %f %f %f )\n", bounceDir.x, bounceDir.y, bounceDir.z);
+
+	// update the position
+	position += bounceDir * BOUNCE_OFFSET;
+	update(glm::translate(bounceDir * BOUNCE_OFFSET));
+	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
+
+	// rotate to the moving direction
+	setFaceDir(bounceDir);
+}
+
+glm::vec3 Character::getPlaneBounceDirection(glm::vec3 normal, glm::vec3 moveDir)
+{
+	// get the bounce move direction with a given incident moveDir and plane's normal
+	GLfloat incident_angle = acos(glm::dot(-glm::normalize(moveDir), glm::normalize(normal)));
+
+	// check the direction, since acos only gives us value >= 0
+	// rotate the normal with reflection angle, so if it rotates to the place of incident vector
+	glm::vec3 normal_rotated = glm::rotate(incident_angle, worldUp) * glm::vec4(normal, 1.0f);
+	float distance = (float)glm::length(glm::normalize(normal_rotated) - glm::normalize(-moveDir));
+	GLfloat reflection_angle;
+	if (distance > 0.01f)
+	{
+		// right angle for reflection
+		reflection_angle = incident_angle;
+	}
+	else
+	{
+		// swap the angle sign
+		reflection_angle = -incident_angle;
+	}
+	glm::vec3 bounceDir = glm::rotate(reflection_angle, worldUp) * glm::vec4(normal, 1.0f);
+	bounceDir = glm::normalize(bounceDir);
+	return bounceDir;
+}
+
+void Character::faceToMoveDirection(glm::vec3 dir)
+{
+	// let the character facing its moving direction 
+	// If the character will move in a different direction than it's facing direction
+	if (glm::length(glm::normalize(dir) - glm::normalize(faceDir)) > 0.01f)
+	{
+		// Rotate the character, translate it back to the origin and do the rotation
+		update(glm::translate(-position));
+
+		// Compute the angle of rotation
+		GLfloat angle_radians = acos(glm::dot(glm::normalize(dir), glm::normalize(faceDir)));
+		// Decide CW or CCW for rotation
+		glm::vec3 face_rotated = glm::rotate(angle_radians, worldUp) * glm::vec4(faceDir, 1.0f);
+
+		// If we should rotate CW
+		float distance = ((float)glm::length(glm::normalize(face_rotated) - glm::normalize(dir)));
+		if (distance > 0.001f)
+		{
+			angle_radians *= -1;
+		}
+
+		update(glm::rotate(angle_radians, worldUp));
+
+		// Translate back to the position
+		update(glm::translate(position));
+
+		// Change the facing direction
+		faceDir = glm::normalize(dir);
+	}
 }

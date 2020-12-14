@@ -251,6 +251,7 @@ void Window::resizeCallback(GLFWwindow* window, int width, int height)
 void Window::idleCallback()
 {
 	nonPlayerControl(deltaTime);
+	nonPlayerMovement(deltaTime);
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -411,39 +412,46 @@ void Window::initializePlayer()
 
 void Window::initializeEnvironmentCollision()
 {
-	glm::vec2 leftUp = glm::vec2(-6.0f, 0.0f);
-	glm::vec2 rightUp = glm::vec2(6.0f, 0.0f);
-	glm::vec2 leftMid = glm::vec2(-6.0f, 4.5f);
-	glm::vec2 rightMid = glm::vec2(6.0f, 4.5f);
-	glm::vec2 leftBottom = glm::vec2(-4.5f, 6.5f);
-	glm::vec2  rightBottom = glm::vec2(4.5f, 6.5f);
+	glm::vec2 leftUp = glm::vec2(-6.7f, 0.0f);
+	glm::vec2 rightUp = glm::vec2(6.7f, 0.0f);
+	glm::vec2 leftMid = glm::vec2(-6.7f, 4.8f);
+	glm::vec2 rightMid = glm::vec2(6.7f, 4.8f);
+	glm::vec2 leftBottom = glm::vec2(-4.8f, 6.7f);
+	glm::vec2  rightBottom = glm::vec2(4.8f, 6.7f);
 
 	glm::vec2 leftCenter = glm::vec2(-3.5f, 2.6f);
 	glm::vec2 rightCenter = glm::vec2(4.0f, 1.3f);
 
+	glm::vec3 downNormal = glm::vec3(0, 0, 1);
+	glm::vec3 upNormal = glm::vec3(0, 0, -1);
+	glm::vec3 leftNormal = glm::vec3(-1, 0, 0);
+	glm::vec3 rightNormal = glm::vec3(1, 0, 0);
+	glm::vec3 rightUpNormal = glm::normalize(glm::vec3(1, 0, -1));
+	glm::vec3 leftUpNormal = glm::normalize(glm::vec3(-1, 0, -1));
+
 	// Up axis wall
-	Physics* upWall = new Physics(BOUNDING_LINE);
-	upWall->updateLine(leftUp, rightUp);
+	Physics* upWall = new Physics(BOUNDING_LINE, NULL);
+	upWall->updateLine(leftUp, rightUp, downNormal);
 
 	// Bottom axis wall
-	Physics* bottomWall = new Physics(BOUNDING_LINE);
-	bottomWall->updateLine(leftBottom, rightBottom);
+	Physics* bottomWall = new Physics(BOUNDING_LINE, NULL);
+	bottomWall->updateLine(leftBottom, rightBottom, upNormal);
 
 	// Left axis wall
-	Physics* leftWall = new Physics(BOUNDING_LINE);
-	leftWall->updateLine(leftUp, leftMid);
+	Physics* leftWall = new Physics(BOUNDING_LINE, NULL);
+	leftWall->updateLine(leftUp, leftMid, rightNormal);
 
 	// Right axis wall
-	Physics* rightWall = new Physics(BOUNDING_LINE);
-	rightWall->updateLine(rightUp, rightMid);
+	Physics* rightWall = new Physics(BOUNDING_LINE, NULL);
+	rightWall->updateLine(rightUp, rightMid, leftNormal);
 
 	// Left diag wall
-	Physics* leftDiagWall = new Physics(BOUNDING_LINE);
-	leftDiagWall->updateLine(leftMid, leftBottom);
+	Physics* leftDiagWall = new Physics(BOUNDING_LINE, NULL);
+	leftDiagWall->updateLine(leftMid, leftBottom, rightUpNormal);
 	
 	// Right diag wall
-	Physics* rightDiagWall = new Physics(BOUNDING_LINE);
-	rightDiagWall->updateLine(rightMid, rightBottom);
+	Physics* rightDiagWall = new Physics(BOUNDING_LINE, NULL);
+	rightDiagWall->updateLine(rightMid, rightBottom, leftUpNormal);
 
 	static_physics.push_back(upWall);
 	static_physics.push_back(bottomWall);
@@ -504,6 +512,48 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 	}
 }
 
+void Window::nonPlayerMovement(GLfloat deltaTime)
+{
+	// non-player starts from 1 of the list
+	for (unsigned int i = 1; i < astronauts.size(); i++)
+	{
+		Character* bot = astronauts[i];
+		GLfloat stopGap = bot->getStopGap();
+		// if the bot is awake
+		if (bot->getStatus() == AWAKE)
+		{
+			if (stopGap - deltaTime > 0.0f)
+			{
+				bot->botMove(deltaTime);
+				stopGap -= deltaTime;
+				bot->setStopGap(stopGap);
+			}
+			else
+			{
+				// it's time for frozen the bot
+				bot->setStatus(SLEEP);
+				bot->setStopGap(getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX));
+				printf("bot %d is set to SLEEP\n", i);
+			}
+		}
+		else if (bot->getStatus() == SLEEP)
+		{
+			if (stopGap - deltaTime > 0.0f)
+			{
+				// continue sleeping
+				stopGap -= deltaTime;
+				bot->setStopGap(stopGap);
+			}
+			else
+			{
+				bot->setStopGap(getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX));
+				bot->setStatus(AWAKE);
+				printf("bot %d is set to AWAKE\n", i);
+			}
+		}
+	}
+}
+
 void Window::generateCharacter(int type)
 {
 	// Create material for new astronaut
@@ -532,7 +582,7 @@ void Window::generateCharacter(int type)
 	// set character to a randome point in the scene, detect collision at first, if failed keep produce new point
 	glm::vec2 randPoint = getRandPoint(-5, 5, 0, 5);
 	glm::vec3 randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
-	printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
+	//printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
 
 	GLboolean res = false;
 	while (!res)
@@ -540,17 +590,22 @@ void Window::generateCharacter(int type)
 		res = astronaut->setPosition(randPos);
 		randPoint = getRandPoint(-6, 6, 0, 6);
 		randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
-		printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
+		//printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
 	}
 
-	// if this character is a bot, set life cycle and stop gap 
+	// if this character is a bot, set life cycle and stop gap, set status as awake, set random moveDir
 	if (type == CHARACTER_BOT)
 	{
 		GLfloat lifeCycle = getRandFloat(LIFE_TIME_MIN, LIFE_TIME_MAX);
 		astronaut->setLifeCycle(lifeCycle);
 		GLfloat stopGap = getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX);
 		astronaut->setStopGap(stopGap);
-		printf("Life Cycle: %f, Stop Gap: %f\n", lifeCycle, stopGap);
+		astronaut->setStatus(AWAKE);
+		glm::vec3 randDir;
+		glm::vec2 randDir2d = getRandPoint(-1, 1, -1, 1);
+		randDir = glm::vec3(randDir2d.x, 0, randDir2d.y);
+		astronaut->setFaceDir(randDir);
+		//printf("Life Cycle: %f, Stop Gap: %f\n", lifeCycle, stopGap);
 	}
 	else if (type == CHARACTER_PLAYER)
 	{
@@ -567,7 +622,7 @@ void Window::generateCharacter(int type)
 
 	// set wait time to generate next astronaut
 	wait_time = getRandFloat(WAIT_TIME_MIN, WAIT_TIME_MAX);
-	printf("Set new generation in %f\n\n", wait_time);
+	//printf("Set new generation in %f\n\n", wait_time);
 }
 
 void Window::deleteCharacter(int index)

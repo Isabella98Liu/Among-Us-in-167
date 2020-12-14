@@ -28,3 +28,9 @@ const int STOP_GAP_MAX = 30;
 
 const int CHARACTER_PLAYER = 0;
 const int CHARACTER_BOT = 1;
+
+// status for bot
+const int AWAKE = 1;
+const int SLEEP = 2;
+
+const float BOUNCE_OFFSET = 0.3f;
