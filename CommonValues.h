@@ -35,4 +35,8 @@ const int SLEEP = 2;
 
 const float BOUNCE_OFFSET = 0.3f;
 
-const float PARTICLE_SYSTEM_LIFE = 5.0f;
+// particle systems
+const float PARTICLE_SYSTEM_LIFE = 4.0f;
+
+const int APPEAR = 0;
+const int DISAPPEAR = 1;

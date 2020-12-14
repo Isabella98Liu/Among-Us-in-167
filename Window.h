@@ -81,7 +81,6 @@ public:
 	static void nonPlayerMovement(GLfloat deltaTime);
 
 	static void particleSystemControl(GLfloat deltaTime);
-	static void particleSystemDraw(glm::mat4 MVP);
 
 	static void generateCharacter(int type);
 	static void deleteCharacter(int index);

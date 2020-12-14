@@ -1,8 +1,17 @@
 #include "ParticleSystem.h"
 
-ParticleSystem::ParticleSystem(Character* o)
+ParticleSystem::ParticleSystem(glm::vec3 pos, int t)
 {
-	owner = o;
+	position = pos;
+	type = t;
+
+	// initialize position data
+	for (unsigned int i = 0; i < MAX_PARTICLES; i++)
+	{
+		particles[i].position = pos;
+		particles[i].velocity = glm::vec3(0);
+		position_data[i] = pos;
+	}
 
 	// Generate buffers
 	glGenVertexArrays(1, &VAO);
@@ -28,25 +37,30 @@ ParticleSystem::~ParticleSystem()
 
 }
 
-void ParticleSystem::draw(GLuint shaderID, glm::mat4 MVP)
+void ParticleSystem::draw(glm::mat4 C)
 {
 	// Actiavte the shader program 
 	glUseProgram(shaderID);
 
 	// Get the shader variable locations and send the uniform data to the shader 
-	glUniformMatrix4fv(glGetUniformLocation(shaderID, "projection"), 1, GL_FALSE, glm::value_ptr(MVP));
+	glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, glm::value_ptr(C * model));
 
 	// Bind the VAO
 	glBindVertexArray(VAO);
 
-	glPointSize(2.0f);
+	glPointSize(PARTICLE_SIZE);
 
 	// Draw the points
-	glDrawArrays(GL_POINTS, 0, 3 * MAX_PARTICLES);
+	glDrawArrays(GL_POINTS, 0, MAX_PARTICLES);
 
 	// Unbind the VAO and shader program
 	glBindVertexArray(0);
 	glUseProgram(0);
+}
+
+void ParticleSystem::update(glm::mat4 C)
+{
+	model = C * model;
 }
 
 void ParticleSystem::Particle::update(GLfloat deltaTime)
@@ -60,8 +74,8 @@ void ParticleSystem::Particle::update(GLfloat deltaTime)
 
 void ParticleSystem::update(GLfloat deltaTime)
 {
-	// add new particles 5 each frame
-	for (unsigned int i = 0; i < 5; i++)
+	// add new particles 1 each frame
+	for (unsigned int i = 0; i < 1; i++)
 	{
 		int unusedParticle = findFirstUnusedParticle();
 		respawnParticle(&particles[unusedParticle]);
@@ -110,7 +124,19 @@ void ParticleSystem::respawnParticle(Particle* particle)
 {
 	// generate a random direction
 	glm::vec3 dir = glm::vec3(getRandFloat(-1, 1), getRandFloat(-1, 1), getRandFloat(-1, 1));
-	particle->position = glm::vec3(owner->getPosition());
-	particle->velocity = PARTICLE_VELOCITY * dir;
-	particle->lifeCycle = PARTICLE_LIFE;
+	// for appear effect, new points come out from the origin
+	if (type == APPEAR)
+	{
+		particle->position = position;
+		particle->velocity = PARTICLE_VELOCITY * dir;
+		particle->lifeCycle = PARTICLE_LIFE;
+	}
+
+	// for disappear effect, new points come back to the origin
+	if (type == DISAPPEAR)
+	{
+		particle->position = position + dir * 0.8f;
+		particle->velocity = PARTICLE_VELOCITY * (-dir * 0.8f);
+		particle->lifeCycle = PARTICLE_LIFE;
+	}
 }

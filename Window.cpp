@@ -295,15 +295,17 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniform3fv(glGetUniformLocation(toonShadingShader, "eyePos"), 1, glm::value_ptr(eyePos));
 	glUseProgram(0);
 
+	glUseProgram(particleSystemShader);
+	glUniformMatrix4fv(glGetUniformLocation(toonShadingShader, "PV"), 1, false, glm::value_ptr(projection * view));
+	glUseProgram(0);
+
+
 	// Send light information to shader
 	directionalLight->sendLightToShader(objectShader);
 	directionalLight->sendLightToShader(toonShadingShader);
 	
 	// Render the Scene Graph Tree
 	worldTransform->draw(glm::mat4(1));
-
-	// Draw particle system
-	particleSystemDraw(projection * view);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -436,8 +438,9 @@ void Window::initializeEnvironmentCollision()
 	glm::vec2 leftBottom = glm::vec2(-4.8f, 6.7f);
 	glm::vec2  rightBottom = glm::vec2(4.8f, 6.7f);
 
-	glm::vec2 leftCenter = glm::vec2(-3.5f, 2.6f);
-	glm::vec2 rightCenter = glm::vec2(4.0f, 1.3f);
+	glm::vec2 leftCenter = glm::vec2(-3.8f, 2.8f);
+	glm::vec2 rightCenter = glm::vec2(4.5f, 1.65f);
+	GLfloat boxRadius = 0.8f;
 
 	glm::vec3 downNormal = glm::vec3(0, 0, 1);
 	glm::vec3 upNormal = glm::vec3(0, 0, -1);
@@ -470,12 +473,23 @@ void Window::initializeEnvironmentCollision()
 	Physics* rightDiagWall = new Physics(BOUNDING_LINE, NULL);
 	rightDiagWall->updateLine(rightMid, rightBottom, leftUpNormal);
 
+	// Left box
+	Physics* leftBox = new Physics(BOUNDING_CIRCLE, NULL);
+	leftBox->updateCircle(leftCenter, boxRadius);
+
+	// Right box
+	Physics* rightBox = new Physics(BOUNDING_CIRCLE, NULL);
+	rightBox->updateCircle(rightCenter, boxRadius);
+
+
 	static_physics.push_back(upWall);
 	static_physics.push_back(bottomWall);
 	static_physics.push_back(leftWall);
 	static_physics.push_back(rightWall);
 	static_physics.push_back(leftDiagWall);
 	static_physics.push_back(rightDiagWall);
+	static_physics.push_back(leftBox);
+	static_physics.push_back(rightBox);
 }
 
 void Window::addEnvironmentCollision(Character* character)
@@ -589,17 +603,10 @@ void Window::particleSystemControl(GLfloat deltaTime)
 	for (unsigned int i = 0; i < destroyList.size(); i++)
 	{
 		int index = destroyList[i];
+		worldTransform->deleteChild(particleSystems[index]);
 		particleSystems.erase(particleSystems.begin() + index);
 	}
 
-}
-
-void Window::particleSystemDraw(glm::mat4 MVP)
-{
-	for (unsigned int i = 0; i < particleSystems.size(); i++)
-	{
-		particleSystems[i]->draw(particleSystemShader, MVP);
-	}
 }
 
 void Window::generateCharacter(int type)
@@ -646,6 +653,7 @@ void Window::generateCharacter(int type)
 	{
 		GLfloat lifeCycle = getRandFloat(LIFE_TIME_MIN, LIFE_TIME_MAX);
 		astronaut->setLifeCycle(lifeCycle);
+		// sleep the new generated bot for 2 seconds before they move
 		astronaut->setStopGap(4.0f);
 		astronaut->setStatus(SLEEP);
 		glm::vec3 randDir;
@@ -672,14 +680,24 @@ void Window::generateCharacter(int type)
 	//printf("Set new generation in %f\n\n", wait_time);
 
 	// add particle system effect for new generated bot
-	ParticleSystem* particleSystem = new ParticleSystem(astronaut);
+	ParticleSystem* particleSystem = new ParticleSystem(astronaut->getPosition(), APPEAR);
+	particleSystem->useShader(particleSystemShader);
 	particleSystems.push_back(particleSystem);
+	// add particle system to the worldtransform
+	worldTransform->addChild(particleSystem);
 }
 
 void Window::deleteCharacter(int index)
 {
 	// recycle color
 	recycleColor(astronauts[index]->getMatrial()->getColor());
+
+	// add particle system effect for new deletec bot
+	ParticleSystem* particleSystem = new ParticleSystem(astronauts[index]->getPosition(), DISAPPEAR);
+	particleSystem->useShader(particleSystemShader);
+	particleSystems.push_back(particleSystem);
+	// add particle system to the worldtransform
+	worldTransform->addChild(particleSystem);
 
 	// delete collision object from other player's list
 	for (unsigned int j = 0; j < astronauts.size(); j++)

@@ -78,6 +78,7 @@ void Character::move(glm::vec3 dir)
 	// Check whether current step will release its collision status
 	position += dir;
 	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
+
 	// if a collision will happen with current move, reverse move and cease
 	if (detectCollision())
 	{
@@ -156,7 +157,7 @@ Physics* Character::detectCollision()
 	// detect whether the character collide with any other physic objects
 	for (unsigned int i = 0; i < physic_objects.size(); i++)
 	{
-		if (boudingCircle->detectCollision(physic_objects[i]))
+		if (boudingCircle->detectCollision(physic_objects[i])) 
 			return physic_objects[i];
 	}
 	return NULL;
@@ -169,7 +170,7 @@ void Character::botMove(GLfloat deltaTime)
 	glm::vec3 dir = faceDir * velocity;
 	update(glm::translate(dir));
 
-	// if a collision will happen, perform bounce, set a new random faceDir, else just move the bot
+	// if a collision will happen, perform bounce, else just move the bot
 	position += dir;
 	boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 	Physics* bounceObj = detectCollision();
@@ -195,9 +196,8 @@ void Character::botBounce(Physics* obj, int flag)
 		// if bounced with a circle, the normal is the vector between centers
 		glm::vec2 normal2d = glm::normalize(boudingCircle->getCenter() - obj->getCenter());
 		normal = glm::vec3(normal2d.x, 0, normal2d.y);
-		printf("%d\n", obj->getCharacter());
 		// also send the bounce information to the other obj, flag make sure there is no deadlock
-		if(flag == 1)
+		if(flag == 1 && obj->getCharacter() != NULL)
 			obj->getCharacter()->botBounce(this->boudingCircle, 2);
 	}
 	

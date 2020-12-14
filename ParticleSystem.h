@@ -14,7 +14,7 @@
 
 // Reference: https://learnopengl.com/In-Practice/2D-Game/Particles && Discussion Slides 
 
-class ParticleSystem
+class ParticleSystem : public Node
 {
 private:
 
@@ -27,14 +27,18 @@ private:
 		void update(GLfloat deltaTime);
 	};
 
-	static const int MAX_PARTICLES = 200;
-	GLfloat PARTICLE_LIFE = 1.5f;
-	GLfloat PARTICLE_VELOCITY = 1.0f;
-
-	Character* owner;
+	static const int MAX_PARTICLES = 700;
+	GLfloat PARTICLE_LIFE = 0.8f;
+	GLfloat PARTICLE_VELOCITY = 0.8f;
+	GLfloat PARTICLE_SIZE = 1.8f;
+	
+	int type;		// define two types of particle system, one for character appear, another for disappear
+	glm::vec3 position;	// emitter's position
 	GLfloat lifeCycle = PARTICLE_SYSTEM_LIFE;
 
 	GLuint VAO, VBO;
+	GLuint shaderID = 0;
+	glm::mat4 model = glm::mat4(1);
 
 	Particle particles[MAX_PARTICLES];
 	glm::vec3 position_data[MAX_PARTICLES];
@@ -44,13 +48,15 @@ private:
 	void respawnParticle(Particle* particle);
 
 public:
-	ParticleSystem(Character* o);
+	ParticleSystem(glm::vec3 pos, int t);
 	~ParticleSystem();
 
 	// Update the position of particles if it's alive, offset is the direction from emiiter to the particle
 	void update(GLfloat deltaTime);
 	
-	void draw(GLuint shader, glm::mat4 MVP);
+	void useShader(GLuint id) { shaderID = id; }
+	void draw(glm::mat4 C);
+	void ParticleSystem::update(glm::mat4 C);
 
 	static GLfloat getRandFloat(int min, int max) { return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min))); }
 	
