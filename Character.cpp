@@ -80,23 +80,14 @@ void Character::move(glm::vec3 dir)
 		
 		// Compute the angle of rotation
 		GLfloat angle_radians = acos(glm::dot(glm::normalize(dir), glm::normalize(faceDir)));
-		// if the rotates pi/2, need to decide the direction
-		if (angle_radians == glm::pi<float>() / 2)
+		// Decide CW or CCW for rotation
+		glm::vec3 face_rotated = glm::rotate(angle_radians, worldUp) * glm::vec4(faceDir, 1.0f);
+
+		// If we should rotate CW
+		float distance = ((float)glm::length(glm::normalize(face_rotated) - glm::normalize(dir)));
+		if (distance > 0.001f)
 		{
-			if (faceDir.x == 0)
-			{
-				if (faceDir.z * dir.x > 0)
-					angle_radians = glm::pi<float>() / 2;
-				else
-					angle_radians = -glm::pi<float>() / 2;
-			}
-			else if (faceDir.z == 0)
-			{
-				if (faceDir.x * dir.z < 0)
-					angle_radians = glm::pi<float>() / 2;
-				else
-					angle_radians = -glm::pi<float>() / 2;
-			}
+			angle_radians *= -1;
 		}
 
 		update(glm::rotate(angle_radians, worldUp));

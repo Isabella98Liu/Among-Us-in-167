@@ -63,6 +63,7 @@ public:
 	void useMaterial(Material* mat);
 
 	Physics* getPhysics() { return boudingCircle; }
+	Material* getMatrial() { return material; }
 
 	void setCollision() { is_collision = true; }
 	void releaseCollision() { is_collision = false; }

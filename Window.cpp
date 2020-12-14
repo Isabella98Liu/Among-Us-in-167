@@ -70,6 +70,7 @@ glm::vec3 astronaut_ambient = glm::vec3(0.8f, 0.8f, 0.8f);
 glm::vec3 astronaut_diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
 glm::vec3 astronaut_specular = glm::vec3(0.5f, 0.5f, 0.5f);
 GLfloat astronaut_shininess = 0.323f;
+std::vector<glm::vec3> astronauts_colors;
 
 // Other control boolean
 GLboolean is_rotating = false;
@@ -104,6 +105,9 @@ bool Window::initializeProgram() {
 
 bool Window::initializeObjects()
 {
+	// Initialize colors for astronauts
+	initializeColor();
+
 	// Initialize directional light
 	directionalLight = new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -392,6 +396,12 @@ GLuint Window::loadTexture(std::string fileName)
 	return textureID;
 }
 
+void Window::initializeColor()
+{
+	for (unsigned int i = 0; i < colorList.size(); i++)
+		astronauts_colors.push_back(colorList[i]);
+}
+
 void Window::initializePlayer()
 {
 	// generate a new character as player
@@ -478,17 +488,7 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 		int index = destroy_list[i];
 
 		printf("\n Astronauts %d should be destroyed.\n", index);
-
-		// delete collision object from other player's list
-		for (unsigned int j = 0; j < astronauts.size(); j++)
-			astronauts[j]->deleteCollisionPhysic(astronauts[index]->getPhysics());
-		
-		// delete from worldTransform as well as from atronauts list
-		worldTransform->deleteChild(astronaut2Worlds[index]);
-		delete astronauts[index];
-		delete astronaut2Worlds[index];
-		astronauts.erase(astronauts.begin() + index);
-		astronaut2Worlds.erase(astronaut2Worlds.begin() + index);
+		deleteCharacter(index);
 	}
 
 	// If there are less than CHARACTER_NUM astronauts, produce new astronaut in WAIT_TIME
@@ -507,7 +507,7 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 void Window::generateCharacter(int type)
 {
 	// Create material for new astronaut
-	glm::vec3 color = colorList[astronauts.size()];
+	glm::vec3 color = getColor();
 	Material* material = new Material(astronaut_ambient, astronaut_diffuse, astronaut_specular, astronaut_shininess, color);
 	// Initialize the astronaut transform and attach character node to it
 	Transform* astronaut2World = new Transform();
@@ -568,4 +568,40 @@ void Window::generateCharacter(int type)
 	// set wait time to generate next astronaut
 	wait_time = getRandFloat(WAIT_TIME_MIN, WAIT_TIME_MAX);
 	printf("Set new generation in %f\n\n", wait_time);
+}
+
+void Window::deleteCharacter(int index)
+{
+	// recycle color
+	recycleColor(astronauts[index]->getMatrial()->getColor());
+
+	// delete collision object from other player's list
+	for (unsigned int j = 0; j < astronauts.size(); j++)
+		astronauts[j]->deleteCollisionPhysic(astronauts[index]->getPhysics());
+
+	// delete from worldTransform as well as from atronauts list
+	worldTransform->deleteChild(astronaut2Worlds[index]);
+	delete astronauts[index];
+	delete astronaut2Worlds[index];
+	astronauts.erase(astronauts.begin() + index);
+	astronaut2Worlds.erase(astronaut2Worlds.begin() + index);
+}
+
+glm::vec3 Window::getColor()
+{
+	// pick the first available color and return it
+	glm::vec3 color;
+	if (astronauts_colors.size() > 0)
+	{
+		color = astronauts_colors[0];
+		// delete this color from the list
+		astronauts_colors.erase(astronauts_colors.begin());	
+	}
+	return color;
+}
+
+void Window::recycleColor(glm::vec3 color)
+{
+	// recycle color previously used by a character than has disappeared
+	astronauts_colors.push_back(color);
 }
