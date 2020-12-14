@@ -18,6 +18,7 @@
 #include "Geometry.h"
 #include "Character.h"
 #include "Physics.h"
+#include "ParticleSystem.h"
 
 #include "CommonValues.h"
 
@@ -46,6 +47,7 @@ public:
 	// Shader Program ID
 	static GLuint objectShader;
 	static GLuint toonShadingShader;
+	static GLuint particleSystemShader;
 
 	// Constructors and Destructors
 	static bool initializeProgram();
@@ -77,6 +79,9 @@ public:
 
 	static void nonPlayerControl(GLfloat deltaTime);
 	static void nonPlayerMovement(GLfloat deltaTime);
+
+	static void particleSystemControl(GLfloat deltaTime);
+	static void particleSystemDraw(glm::mat4 MVP);
 
 	static void generateCharacter(int type);
 	static void deleteCharacter(int index);

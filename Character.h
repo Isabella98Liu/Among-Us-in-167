@@ -16,7 +16,6 @@
 
 #include <string>
 #include <vector>
-#include <algorithm>    // std::find
 
 class Character : public Node
 {
@@ -26,7 +25,6 @@ private:
 
 	Physics* boudingCircle;
 	GLfloat bounding_radius = 0.3f;
-	GLboolean is_collision = false;
 	std::vector<Physics*> physic_objects;
 
 	glm::vec3 position;
@@ -35,6 +33,7 @@ private:
 	glm::vec3 up;
 	glm::vec3 worldUp;
 
+	//GLfloat moveSpeed = 0.01f;
 	GLfloat moveSpeed = 2.0f;
 	glm::vec3 faceDir;
 
@@ -66,8 +65,6 @@ public:
 	Physics* getPhysics() { return boudingCircle; }
 	Material* getMatrial() { return material; }
 
-	void setCollision() { is_collision = true; }
-	void releaseCollision() { is_collision = false; }
 	void addCollisionPhysic(Physics* obj) { physic_objects.push_back(obj); }
 	void deleteCollisionPhysic(Physics* obj);
 	Physics* detectCollision();

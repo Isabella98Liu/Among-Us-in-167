@@ -95,6 +95,7 @@ void Character::move(glm::vec3 dir)
 void Character::keyControl(bool* keys, GLfloat deltaTime)
 {
 	GLfloat velocity = moveSpeed * deltaTime;
+	//GLfloat velocity = moveSpeed;
 
 	if (keys[GLFW_KEY_W]) {
 		move(front * velocity);
@@ -164,6 +165,7 @@ Physics* Character::detectCollision()
 void Character::botMove(GLfloat deltaTime)
 {
 	GLfloat velocity = moveSpeed * deltaTime;
+	//GLfloat velocity = moveSpeed;
 	glm::vec3 dir = faceDir * velocity;
 	update(glm::translate(dir));
 
@@ -179,8 +181,8 @@ void Character::botMove(GLfloat deltaTime)
 
 void Character::botBounce(Physics* obj, int flag)
 {
-	// if this bot is sleeping, treat it as a static object
-	if (status == SLEEP)
+	// if this bot is sleeping or the player, treat it as a static object
+	if (status == SLEEP || lifeCycle == 0.0f)
 		return;
 	
 	glm::vec3 normal = glm::vec3(0);

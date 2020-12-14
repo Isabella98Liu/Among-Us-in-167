@@ -27,6 +27,8 @@ glm::vec3 Window::eyePos;
 // Shader Program ID
 GLuint Window::objectShader; 
 GLuint Window::toonShadingShader;
+GLuint Window::particleSystemShader;
+
 
 // Scene Graph
 /*
@@ -82,6 +84,9 @@ std::vector<Physics*> static_physics;
 // Bot control
 GLfloat wait_time = 0.0f;	// wait time to generate next astronaut
 
+// Particle system
+std::vector<ParticleSystem*> particleSystems;
+
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	objectShader = LoadShaders("shaders/BaseObject.vert", "shaders/BaseObject.frag");
@@ -97,6 +102,14 @@ bool Window::initializeProgram() {
 	if (!toonShadingShader)
 	{
 		std::cerr << "Failed to initialize ToonShading shader program" << std::endl;
+		return false;
+	}
+
+	particleSystemShader = LoadShaders("shaders/particelSystem.vert", "shaders/particelSystem.frag");
+	// Check the shader program.
+	if (!particleSystemShader)
+	{
+		std::cerr << "Failed to initialize ParticleSystem shader program" << std::endl;
 		return false;
 	}
 
@@ -252,6 +265,7 @@ void Window::idleCallback()
 {
 	nonPlayerControl(deltaTime);
 	nonPlayerMovement(deltaTime);
+	particleSystemControl(deltaTime);
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -287,6 +301,9 @@ void Window::displayCallback(GLFWwindow* window)
 	
 	// Render the Scene Graph Tree
 	worldTransform->draw(glm::mat4(1));
+
+	// Draw particle system
+	particleSystemDraw(projection * view);
 
 	// Gets events, including input such as keyboard and mouse or window resizing
 	glfwPollEvents();
@@ -485,7 +502,7 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 		{
 			// if reach the life cycle limit, record the index and destroy the non player later
 			destroy_list.push_back(i);
-			printf("\n ADD one character to destroy list\n");
+			//printf("\n ADD one character to destroy list\n");
 		}
 	}
 
@@ -495,7 +512,7 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 	{
 		int index = destroy_list[i];
 
-		printf("\n Astronauts %d should be destroyed.\n", index);
+		//printf("\n Astronauts %d should be destroyed.\n", index);
 		deleteCharacter(index);
 	}
 
@@ -533,7 +550,7 @@ void Window::nonPlayerMovement(GLfloat deltaTime)
 				// it's time for frozen the bot
 				bot->setStatus(SLEEP);
 				bot->setStopGap(getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX));
-				printf("bot %d is set to SLEEP\n", i);
+				//printf("bot %d is set to SLEEP\n", i);
 			}
 		}
 		else if (bot->getStatus() == SLEEP)
@@ -548,9 +565,40 @@ void Window::nonPlayerMovement(GLfloat deltaTime)
 			{
 				bot->setStopGap(getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX));
 				bot->setStatus(AWAKE);
-				printf("bot %d is set to AWAKE\n", i);
+				//printf("bot %d is set to AWAKE\n", i);
 			}
 		}
+	}
+}
+
+void Window::particleSystemControl(GLfloat deltaTime)
+{
+	std::vector<int> destroyList;
+	for (unsigned int i = 0; i < particleSystems.size(); i++)
+	{
+		GLfloat lifeCycle = particleSystems[i]->getLifeCycle();
+		
+		// this particle system should be destroyed
+		if (lifeCycle - deltaTime <= 0.0f)
+			destroyList.push_back(i);
+		else
+			particleSystems[i]->update(deltaTime);
+	}
+
+	// destroy the particle system
+	for (unsigned int i = 0; i < destroyList.size(); i++)
+	{
+		int index = destroyList[i];
+		particleSystems.erase(particleSystems.begin() + index);
+	}
+
+}
+
+void Window::particleSystemDraw(glm::mat4 MVP)
+{
+	for (unsigned int i = 0; i < particleSystems.size(); i++)
+	{
+		particleSystems[i]->draw(particleSystemShader, MVP);
 	}
 }
 
@@ -598,9 +646,8 @@ void Window::generateCharacter(int type)
 	{
 		GLfloat lifeCycle = getRandFloat(LIFE_TIME_MIN, LIFE_TIME_MAX);
 		astronaut->setLifeCycle(lifeCycle);
-		GLfloat stopGap = getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX);
-		astronaut->setStopGap(stopGap);
-		astronaut->setStatus(AWAKE);
+		astronaut->setStopGap(4.0f);
+		astronaut->setStatus(SLEEP);
 		glm::vec3 randDir;
 		glm::vec2 randDir2d = getRandPoint(-1, 1, -1, 1);
 		randDir = glm::vec3(randDir2d.x, 0, randDir2d.y);
@@ -623,6 +670,10 @@ void Window::generateCharacter(int type)
 	// set wait time to generate next astronaut
 	wait_time = getRandFloat(WAIT_TIME_MIN, WAIT_TIME_MAX);
 	//printf("Set new generation in %f\n\n", wait_time);
+
+	// add particle system effect for new generated bot
+	ParticleSystem* particleSystem = new ParticleSystem(astronaut);
+	particleSystems.push_back(particleSystem);
 }
 
 void Window::deleteCharacter(int index)
