@@ -9,12 +9,12 @@ uniform mat4 model;
 //uniform vec3 offset; 	// handle emitter's movement
 //uniform vec3 color;
 
-out vec4 particleColor;
+//out vec4 particleColor;
 
 void main()
 {
 	//float scale = 10.0f;
-	vec3 color = vec3(0,0,0);
+	//vec3 color = vec3(0,0,0);
 	gl_Position = PV * model * vec4(position, 1.0);
-	particleColor = vec4(color, 1.0);
+	//particleColor = vec4(0.8, 0.8, 0.8, 0.5);
 }

@@ -20,11 +20,11 @@ const int WAIT_TIME_MAX = 10;
 
 // Life cycel of a non-player
 const int LIFE_TIME_MIN = 10;
-const int LIFE_TIME_MAX = 20;
+const int LIFE_TIME_MAX = 30;
 
 // Stop gap for a non-player
 const int STOP_GAP_MIN = 5;
-const int STOP_GAP_MAX = 30;
+const int STOP_GAP_MAX = 15;
 
 const int CHARACTER_PLAYER = 0;
 const int CHARACTER_BOT = 1;
@@ -32,6 +32,7 @@ const int CHARACTER_BOT = 1;
 // status for bot
 const int AWAKE = 1;
 const int SLEEP = 2;
+const int DISAPPEARING = 3;
 
 const float BOUNCE_OFFSET = 0.3f;
 

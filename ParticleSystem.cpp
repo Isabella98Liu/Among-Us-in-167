@@ -123,7 +123,8 @@ int ParticleSystem::findFirstUnusedParticle()
 void ParticleSystem::respawnParticle(Particle* particle)
 {
 	// generate a random direction
-	glm::vec3 dir = glm::vec3(getRandFloat(-1, 1), getRandFloat(-1, 1), getRandFloat(-1, 1));
+	glm::vec3 dir = getBallPoint(0.8f);
+
 	// for appear effect, new points come out from the origin
 	if (type == APPEAR)
 	{
@@ -135,8 +136,23 @@ void ParticleSystem::respawnParticle(Particle* particle)
 	// for disappear effect, new points come back to the origin
 	if (type == DISAPPEAR)
 	{
-		particle->position = position + dir * 0.8f;
-		particle->velocity = PARTICLE_VELOCITY * (-dir * 0.8f);
+		particle->position = position + dir;
+		particle->velocity = PARTICLE_VELOCITY * -dir;
 		particle->lifeCycle = PARTICLE_LIFE;
 	}
+}
+
+glm::vec3 ParticleSystem::getBallPoint(float scale)
+{
+	// generate a random point inside a unit ball
+	glm::vec3 point;
+
+	float alpha = getRandFloat(0, 2 * glm::pi<float>());
+	float theta = getRandFloat(0, glm::pi<float>());
+
+	point.x = scale * sin(theta) * sin(alpha);
+	point.y = scale * cos(theta);
+	point.z = scale * sin(theta) * cos(alpha);
+
+	return point;
 }

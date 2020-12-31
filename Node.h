@@ -12,8 +12,19 @@
 
 class Node
 {
+private:
+	Node* parent = NULL;
+	GLboolean disabled = false;
+
 public:
 	virtual void draw(glm::mat4 C) = 0;
 	virtual void update(glm::mat4 C) = 0;
+
+	void setParent(Node* p) { parent = p; }
+	Node* getParent() { return parent; }
+
+	GLboolean getDisable() { return disabled; }
+	void disable() { disabled = true; }
+	void enable() { disabled = false; }
 };
 

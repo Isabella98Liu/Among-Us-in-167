@@ -3,14 +3,8 @@
 
 #include "main.h"
 #include "shader.h"
-#include "BaseObject.h"
-#include "Cube.h"
 #include "DirectionalLight.h"
-#include "PointLight.h"
-#include "SpotLight.h"
-#include "SkyBox.h"
 #include "Camera.h"
-#include "Sphere.h"
 #include "Material.h"
 
 #include "Node.h"
@@ -21,6 +15,11 @@
 #include "ParticleSystem.h"
 
 #include "CommonValues.h"
+
+#include "irrKlang.h"
+#include "stb_image.h"
+
+using namespace irrklang;
 
 class Window
 {
@@ -48,6 +47,9 @@ public:
 	static GLuint objectShader;
 	static GLuint toonShadingShader;
 	static GLuint particleSystemShader;
+
+	// Sound effect
+	static ISoundEngine* SoundEngine;
 
 	// Constructors and Destructors
 	static bool initializeProgram();
@@ -82,7 +84,9 @@ public:
 
 	static void particleSystemControl(GLfloat deltaTime);
 
-	static void generateCharacter(int type);
+	static void generateCharacter(int type, glm::vec3 color);
+	static void reuseCharacter(int index);
+	static void disableCharacter(int index);
 	static void deleteCharacter(int index);
 
 	static glm::vec3 getColor();
@@ -91,8 +95,6 @@ public:
 	bool* getKeys() { return keys; }
 	static GLfloat getRandFloat(int min, int max) { return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min))); }
 	static glm::vec2 getRandPoint(int x_min, int x_max, int y_min, int y_max) { return glm::vec2(getRandFloat(x_min, x_max), getRandFloat(y_min, y_max)); }
-
-
 
 };
 

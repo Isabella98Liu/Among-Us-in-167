@@ -29,8 +29,8 @@ private:
 
 	static const int MAX_PARTICLES = 700;
 	GLfloat PARTICLE_LIFE = 0.8f;
-	GLfloat PARTICLE_VELOCITY = 0.8f;
-	GLfloat PARTICLE_SIZE = 1.8f;
+	GLfloat PARTICLE_VELOCITY = 1.0f;
+	GLfloat PARTICLE_SIZE = 2.5f;
 	
 	int type;		// define two types of particle system, one for character appear, another for disappear
 	glm::vec3 position;	// emitter's position
@@ -59,7 +59,8 @@ public:
 	void ParticleSystem::update(glm::mat4 C);
 
 	static GLfloat getRandFloat(int min, int max) { return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min))); }
-	
+	glm::vec3 getBallPoint(float scale);
+
 	GLfloat getLifeCycle() { return lifeCycle; }
 };
 

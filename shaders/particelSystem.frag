@@ -2,11 +2,11 @@
 
 #version 330 core
 
-in vec4 particleColor;
+//in vec4 particleColor;
 
-out vec4 color;
+out vec4 fragColor;
 
 void main()
 {
-	color = vec4(0.8, 0.8, 0.8, 0.3);
+	fragColor = vec4(0.5, 0.8, 0.2, 0.1);
 }

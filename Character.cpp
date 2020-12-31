@@ -60,12 +60,13 @@ GLboolean Character::setPosition(glm::vec3 pos)
 	if (detectCollision())
 	{
 		//printf("A collision will happen if you set this position\n");
-		position = glm::vec3(0);
+		position = old_position;
 		boudingCircle->updateCircle(glm::vec2(position.x, position.z), bounding_radius);
 		return false;
 	}
 
 	// if no collision will happen, accept the new position
+
 	update(glm::translate(position - old_position));
 	return true;
 }
@@ -157,6 +158,12 @@ Physics* Character::detectCollision()
 	// detect whether the character collide with any other physic objects
 	for (unsigned int i = 0; i < physic_objects.size(); i++)
 	{
+		// if this obj's is dynamic and is disabled then just dont detect
+		if (physic_objects[i]->getCharacter() != NULL)
+		{
+			if (physic_objects[i]->getCharacter()->getParent()->getDisable())
+				continue;
+		}
 		if (boudingCircle->detectCollision(physic_objects[i])) 
 			return physic_objects[i];
 	}

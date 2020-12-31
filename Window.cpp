@@ -11,9 +11,9 @@ glm::vec2 Window::cursor_pos;
 GLfloat Window::xChange = 0.0f;
 GLfloat Window::yChange = 0.0f;
 GLfloat Window::deltaTime = 0.0f;
-GLfloat  Window::lastTime = 0.0f;
+GLfloat Window::lastTime = 0.0f;
 
-// Lights, Textures, Materialss
+// Lights, Textures, Materials
 DirectionalLight* directionalLight;
 Material* lobbyMaterial;
 GLuint lobbyTexture;
@@ -82,12 +82,18 @@ std::vector<Physics*> movable_physics;
 std::vector<Physics*> static_physics;
 
 // Bot control
-GLfloat wait_time = 0.0f;	// wait time to generate next astronaut
+GLfloat wait_time = 0.0f;		// waiting time to generate next astronaut
+std::vector<int> disabledBots;	// list of the index of disabled bots
 
 // Particle system
 std::vector<ParticleSystem*> particleSystems;
 
+// Sound effect
+ISoundEngine* Window::SoundEngine = createIrrKlangDevice();
+
 bool Window::initializeProgram() {
+	SoundEngine->play2D("./Audios/appear.wav", true);
+
 	// Create a shader program with a vertex shader and a fragment shader.
 	objectShader = LoadShaders("shaders/BaseObject.vert", "shaders/BaseObject.frag");
 	// Check the shader program.
@@ -154,7 +160,7 @@ bool Window::initializeObjects()
 	// Initialize environment physic objects for collision detection
 	initializeEnvironmentCollision();
 
-	// Initialize astronauts' characters
+	// Initialize astronauts
 	initializePlayer();
 
 	return true;
@@ -270,6 +276,7 @@ void Window::idleCallback()
 
 void Window::displayCallback(GLFWwindow* window)
 {	
+
 	// Calculate the deltatime
 	GLfloat currentTime = (GLfloat)glfwGetTime();		// SDL_GetPerformanceCounter()
 	deltaTime = currentTime - lastTime;			// (currentTime - lastTime) * 1000 / SDL_GetPerformancefrequency();
@@ -425,12 +432,26 @@ void Window::initializeColor()
 void Window::initializePlayer()
 {
 	// generate a new character as player
-	generateCharacter(CHARACTER_PLAYER);
+	generateCharacter(CHARACTER_PLAYER, colorList[0]);
+
+	// generate (CHARACTER_NUM -  1) bot
+	for (unsigned int i = 1; i < CHARACTER_NUM; i++)
+	{
+		generateCharacter(CHARACTER_BOT, colorList[i]);
+
+		// bot disabled (not drawn) unless wake up by the controller
+		astronauts[i]->getParent()->disable();
+		disabledBots.push_back(i);
+	}
+
+	// set waiting time to activate next bot
+	wait_time = getRandFloat(WAIT_TIME_MIN, WAIT_TIME_MAX);
 
 }
 
 void Window::initializeEnvironmentCollision()
 {
+	// hard coded environmental physics
 	glm::vec2 leftUp = glm::vec2(-6.7f, 0.0f);
 	glm::vec2 rightUp = glm::vec2(6.7f, 0.0f);
 	glm::vec2 leftMid = glm::vec2(-6.7f, 4.8f);
@@ -503,42 +524,54 @@ void Window::addEnvironmentCollision(Character* character)
 
 void Window::nonPlayerControl(GLfloat deltaTime)
 {
-	// Loop through each non player and check life cycle, destroy if needed
-	// non-player are stored in [1..9] of astronauts
-	std::vector<int> destroy_list;
-	for (unsigned int i = 1; i < astronauts.size(); i++)
+	// Loop through each active non player and check life cycle, disable if needed
+	// non-player are stored in [1, CHARACTER_NUM ) of the astronauts list
+	for (unsigned int i = 1; i < CHARACTER_NUM; i++)
 	{
+		// skip the disabled bots
+		if (astronauts[i]->getParent()->getDisable())
+			continue;
+
 		GLfloat lifeCycle = astronauts[i]->getLifeCycle();
 		lifeCycle -= deltaTime;
 		astronauts[i]->setLifeCycle(lifeCycle);
 
+		// if reach the life cycle limit, sleep for a while before disable
 		if (lifeCycle <= 0.0f)
 		{
-			// if reach the life cycle limit, record the index and destroy the non player later
-			destroy_list.push_back(i);
-			//printf("\n ADD one character to destroy list\n");
+			if (astronauts[i]->getStatus() != DISAPPEARING)
+			{
+				astronauts[i]->setStatus(DISAPPEARING);
+				astronauts[i]->setStopGap(4.0f);
+
+				// Activate the disappear particle effect
+				ParticleSystem* particleSystem = new ParticleSystem(astronauts[i]->getPosition(), DISAPPEAR);
+				particleSystem->useShader(particleSystemShader);
+				particleSystems.push_back(particleSystem);
+				// add particle system to the worldtransform
+				worldTransform->addChild(particleSystem);
+			}
 		}
 	}
 
-
-	// Destroy non players that have reach its end of life cycle
-	for (unsigned int i = 0; i < destroy_list.size(); i++)
-	{
-		int index = destroy_list[i];
-
-		//printf("\n Astronauts %d should be destroyed.\n", index);
-		deleteCharacter(index);
-	}
-
-	// If there are less than CHARACTER_NUM astronauts, produce new astronaut in WAIT_TIME
-	if (astronauts.size() < 10)
+	// If there exist disabled astronauts, reuse next astronaut in WAIT_TIME
+	if (disabledBots.size() > 0)
 	{
 		if (wait_time - deltaTime > 0)
 			wait_time -= deltaTime;
 		else
 		{
-			// if it's time to generate a new astroanut
-			generateCharacter(CHARACTER_BOT);
+			// if it's time to activate a new astroanut, select a random disabled bot to activate
+			int idx = rand() % disabledBots.size();	// [ 1, CHARACTER_NUM )
+			int index = disabledBots[idx];
+
+			// Erase from the disabled character list
+			disabledBots.erase(disabledBots.begin() + idx);
+
+			reuseCharacter(index);
+
+			// set wait time to generate next astronaut
+			wait_time = getRandFloat(WAIT_TIME_MIN, WAIT_TIME_MAX);
 		}
 	}
 }
@@ -546,9 +579,14 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 void Window::nonPlayerMovement(GLfloat deltaTime)
 {
 	// non-player starts from 1 of the list
-	for (unsigned int i = 1; i < astronauts.size(); i++)
+	for (unsigned int i = 1; i < CHARACTER_NUM; i++)
 	{
 		Character* bot = astronauts[i];
+
+		// skip the disabled bots
+		if (bot->getParent()->getDisable())
+			continue;
+
 		GLfloat stopGap = bot->getStopGap();
 		// if the bot is awake
 		if (bot->getStatus() == AWAKE)
@@ -561,10 +599,9 @@ void Window::nonPlayerMovement(GLfloat deltaTime)
 			}
 			else
 			{
-				// it's time for frozen the bot
+				// it's time to froze the bot
 				bot->setStatus(SLEEP);
 				bot->setStopGap(getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX));
-				//printf("bot %d is set to SLEEP\n", i);
 			}
 		}
 		else if (bot->getStatus() == SLEEP)
@@ -579,7 +616,19 @@ void Window::nonPlayerMovement(GLfloat deltaTime)
 			{
 				bot->setStopGap(getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX));
 				bot->setStatus(AWAKE);
-				//printf("bot %d is set to AWAKE\n", i);
+			}
+		}
+		else if (bot->getStatus() == DISAPPEARING)
+		{
+			if (stopGap - deltaTime > 0.0f)
+			{
+				// continue pause
+				stopGap -= deltaTime;
+				bot->setStopGap(stopGap);
+			}
+			else
+			{
+				disableCharacter(i);
 			}
 		}
 	}
@@ -606,13 +655,11 @@ void Window::particleSystemControl(GLfloat deltaTime)
 		worldTransform->deleteChild(particleSystems[index]);
 		particleSystems.erase(particleSystems.begin() + index);
 	}
-
 }
 
-void Window::generateCharacter(int type)
+void Window::generateCharacter(int type, glm::vec3 color)
 {
 	// Create material for new astronaut
-	glm::vec3 color = getColor();
 	Material* material = new Material(astronaut_ambient, astronaut_diffuse, astronaut_specular, astronaut_shininess, color);
 	// Initialize the astronaut transform and attach character node to it
 	Transform* astronaut2World = new Transform();
@@ -634,33 +681,30 @@ void Window::generateCharacter(int type)
 		astronauts[i]->addCollisionPhysic(astronaut->getPhysics());
 	}
 
-	// set character to a randome point in the scene, detect collision at first, if failed keep produce new point
+	// set character to a randome point in the scene, detect collision at first, if fail keep producing new point
 	glm::vec2 randPoint = getRandPoint(-5, 5, 0, 5);
 	glm::vec3 randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
-	//printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
-
 	GLboolean res = false;
 	while (!res)
 	{
 		res = astronaut->setPosition(randPos);
 		randPoint = getRandPoint(-6, 6, 0, 6);
 		randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
-		//printf("rand position: ( %f %f %f)\n", randPos.x, randPos.y, randPos.z);
 	}
 
-	// if this character is a bot, set life cycle and stop gap, set status as awake, set random moveDir
+	// if this character is a bot, set life cycle and stop gap, set random moveDir
 	if (type == CHARACTER_BOT)
 	{
 		GLfloat lifeCycle = getRandFloat(LIFE_TIME_MIN, LIFE_TIME_MAX);
 		astronaut->setLifeCycle(lifeCycle);
-		// sleep the new generated bot for 2 seconds before they move
+		// sleep the new generated bot for a few seconds before they move (in order to show the particle effect)
 		astronaut->setStopGap(4.0f);
 		astronaut->setStatus(SLEEP);
 		glm::vec3 randDir;
 		glm::vec2 randDir2d = getRandPoint(-1, 1, -1, 1);
 		randDir = glm::vec3(randDir2d.x, 0, randDir2d.y);
 		astronaut->setFaceDir(randDir);
-		//printf("Life Cycle: %f, Stop Gap: %f\n", lifeCycle, stopGap);
+		
 	}
 	else if (type == CHARACTER_PLAYER)
 	{
@@ -673,11 +717,35 @@ void Window::generateCharacter(int type)
 	worldTransform->addChild(astronaut2World);
 	astronauts.push_back(astronaut);
 	astronaut2Worlds.push_back(astronaut2World);
+}
 
+void Window::reuseCharacter(int index)
+{
+	// Enable the character's transform
+	Character* astronaut = astronauts[index];
+	astronaut->getParent()->enable();
 
-	// set wait time to generate next astronaut
-	wait_time = getRandFloat(WAIT_TIME_MIN, WAIT_TIME_MAX);
-	//printf("Set new generation in %f\n\n", wait_time);
+	// regenerate random properties
+	// set character to a randome point in the scene, detect collision at first, if fail keep producing new point
+	glm::vec2 randPoint = getRandPoint(-5, 5, 0, 5);
+	glm::vec3 randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
+	GLboolean res = false;
+	while (!res)
+	{
+		res = astronaut->setPosition(randPos);
+		randPoint = getRandPoint(-5, 5, 0, 5);
+		randPos = glm::vec3(randPoint.x, -1.8f, randPoint.y);
+	}
+
+	GLfloat lifeCycle = getRandFloat(LIFE_TIME_MIN, LIFE_TIME_MAX);
+	astronaut->setLifeCycle(lifeCycle);
+	// sleep the new generated bot for a few seconds before they move (in order to show the particle effect)
+	astronaut->setStopGap(4.0f);
+	astronaut->setStatus(SLEEP);
+	glm::vec3 randDir;
+	glm::vec2 randDir2d = getRandPoint(-1, 1, -1, 1);
+	randDir = glm::vec3(randDir2d.x, 0, randDir2d.y);
+	astronaut->setFaceDir(randDir);
 
 	// add particle system effect for new generated bot
 	ParticleSystem* particleSystem = new ParticleSystem(astronaut->getPosition(), APPEAR);
@@ -685,6 +753,19 @@ void Window::generateCharacter(int type)
 	particleSystems.push_back(particleSystem);
 	// add particle system to the worldtransform
 	worldTransform->addChild(particleSystem);
+
+	// player appear sound
+	//SoundEngine->play2D("./Audios/appear.ogg", true);
+	//SoundEngine->play2D("./Audios/disappear.wav", true);
+}
+
+void Window::disableCharacter(int index)
+{
+	// Set the astronaut to disabled
+	astronauts[index]->getParent()->disable();
+
+	// Add the astronaus to the disabled list for future reuse
+	disabledBots.push_back(index);
 }
 
 void Window::deleteCharacter(int index)
