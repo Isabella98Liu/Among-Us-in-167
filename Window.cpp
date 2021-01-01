@@ -544,6 +544,9 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 				astronauts[i]->setStatus(DISAPPEARING);
 				astronauts[i]->setStopGap(PARTICLE_SYSTEM_LIFE);
 
+				// switch to stand frame
+				astronauts[i]->frameRecover();
+
 				// Activate the disappear particle effect
 				ParticleSystem* particleSystem = new ParticleSystem(astronauts[i]->getPosition(), DISAPPEAR);
 				particleSystem->useShader(particleSystemShader);
@@ -606,6 +609,9 @@ void Window::nonPlayerMovement(GLfloat deltaTime)
 				// it's time to froze the bot
 				bot->setStatus(SLEEP);
 				bot->setStopGap(getRandFloat(STOP_GAP_MIN, STOP_GAP_MAX));
+
+				// switch to the stand frame
+				bot->frameRecover();
 			}
 		}
 		else if (bot->getStatus() == SLEEP)

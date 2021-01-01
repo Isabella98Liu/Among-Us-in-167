@@ -21,7 +21,14 @@ class Character : public Node
 {
 private:
 	std::vector<Geometry*> frames;
+	std::vector<Geometry*> moveFrames;
+	Geometry* standFrame;
+
+
 	Geometry* currentFrame;
+	int currentFrameIndex;
+	GLfloat frameCycle = 0.25f;
+	GLfloat frameLife = frameCycle;
 
 	Physics* boudingCircle;
 	GLfloat bounding_radius = 0.3f;
@@ -57,6 +64,8 @@ public:
 	GLboolean setPosition(glm::vec3 pos);
 	void move(glm::vec3 dir);
 	void keyControl(bool* keys, GLfloat deltaTime);
+	void frameControl(GLfloat deltaTime);
+	void frameRecover();
 
 	void useTexture(GLuint id);
 	void useShader(GLuint id);

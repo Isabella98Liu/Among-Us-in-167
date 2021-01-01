@@ -7,10 +7,15 @@ Character::Character(std::vector<std::string> frameFiles, int mode)
 	{
 		Geometry* frame = new Geometry(frameFiles[i], mode);
 		frames.push_back(frame);
+		if (i == 0) 
+			standFrame = frame;
+		else 
+			moveFrames.push_back(frame);
 	}
 
 	// Set the first frame as default frame
-	currentFrame = frames[0];
+	currentFrame = standFrame;
+	currentFrameIndex = 0;
 
 	// Set default position and directions
 	position = glm::vec3(0);
@@ -101,16 +106,46 @@ void Character::keyControl(bool* keys, GLfloat deltaTime)
 
 	if (keys[GLFW_KEY_W]) {
 		move(front * velocity);
+		frameControl(deltaTime);
 	}
 	else if (keys[GLFW_KEY_S]) {
 		move(-front * velocity);
+		frameControl(deltaTime);
 	}
 	else if (keys[GLFW_KEY_A]) {
 		move(-right * velocity);
+		frameControl(deltaTime);
 	}
 	else if (keys[GLFW_KEY_D]) {
 		move(right * velocity);
+		frameControl(deltaTime);
 	}
+	else if (!keys[GLFW_KEY_W] && !keys[GLFW_KEY_S] && !keys[GLFW_KEY_A] && !keys[GLFW_KEY_D])
+	{
+		// if user is not pressing any direction keys, recover to the stand model
+		frameRecover();
+	}
+}
+
+void Character::frameControl(GLfloat deltaTime)
+{
+	// Switch frames
+	if (frameLife - deltaTime <= 0.0f)
+	{
+		currentFrameIndex = (currentFrameIndex + 1) % moveFrames.size();
+		currentFrame = moveFrames[currentFrameIndex];
+		frameLife = frameCycle;
+	}
+	else
+	{
+		frameLife -= deltaTime;
+	}
+}
+
+void Character::frameRecover()
+{
+	// change current frame to the stand one when not moving
+	currentFrame = standFrame;
 }
 
 void Character::useTexture(GLuint id)
@@ -185,6 +220,9 @@ void Character::botMove(GLfloat deltaTime)
 	{
 		botBounce(bounceObj, 1);
 	}
+
+	// animation
+	frameControl(deltaTime);
 }
 
 void Character::botBounce(Physics* obj, int flag)
