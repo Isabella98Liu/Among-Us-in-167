@@ -37,7 +37,9 @@ const int DISAPPEARING = 3;
 const float BOUNCE_OFFSET = 0.3f;
 
 // particle systems
-const float PARTICLE_SYSTEM_LIFE = 4.0f;
-
+const float PARTICLE_SYSTEM_LIFE = 2.0f;
 const int APPEAR = 0;
 const int DISAPPEAR = 1;
+
+// sound systems
+const float SOUND_SYSTEM_LIFE = 2.0f;

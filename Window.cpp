@@ -88,11 +88,10 @@ std::vector<int> disabledBots;	// list of the index of disabled bots
 // Particle system
 std::vector<ParticleSystem*> particleSystems;
 
-// Sound effect
-ISoundEngine* Window::SoundEngine = createIrrKlangDevice();
+// Sound system
+std::vector<SoundSystem*> soundSystems;
 
 bool Window::initializeProgram() {
-	SoundEngine->play2D("./Audios/appear.wav", true);
 
 	// Create a shader program with a vertex shader and a fragment shader.
 	objectShader = LoadShaders("shaders/BaseObject.vert", "shaders/BaseObject.frag");
@@ -272,6 +271,7 @@ void Window::idleCallback()
 	nonPlayerControl(deltaTime);
 	nonPlayerMovement(deltaTime);
 	particleSystemControl(deltaTime);
+	soundSystemControl(deltaTime);
 }
 
 void Window::displayCallback(GLFWwindow* window)
@@ -542,7 +542,7 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 			if (astronauts[i]->getStatus() != DISAPPEARING)
 			{
 				astronauts[i]->setStatus(DISAPPEARING);
-				astronauts[i]->setStopGap(4.0f);
+				astronauts[i]->setStopGap(PARTICLE_SYSTEM_LIFE);
 
 				// Activate the disappear particle effect
 				ParticleSystem* particleSystem = new ParticleSystem(astronauts[i]->getPosition(), DISAPPEAR);
@@ -550,6 +550,10 @@ void Window::nonPlayerControl(GLfloat deltaTime)
 				particleSystems.push_back(particleSystem);
 				// add particle system to the worldtransform
 				worldTransform->addChild(particleSystem);
+
+				// add character disappear sound to the sound system
+				SoundSystem* soundSystem = new SoundSystem(SOUND_SYSTEM_LIFE, "./Audios/disappear.mp3");
+				soundSystems.push_back(soundSystem);
 			}
 		}
 	}
@@ -653,7 +657,31 @@ void Window::particleSystemControl(GLfloat deltaTime)
 	{
 		int index = destroyList[i];
 		worldTransform->deleteChild(particleSystems[index]);
+		delete particleSystems[index];
 		particleSystems.erase(particleSystems.begin() + index);
+	}
+}
+
+void Window::soundSystemControl(GLfloat deltaTime)
+{
+	std::vector<int> destroyList;
+	for (unsigned int i = 0; i < soundSystems.size(); i++)
+	{
+		GLfloat lifeCycle = soundSystems[i]->getLifeCycle();
+
+		// this particle system should be destroyed
+		if (lifeCycle - deltaTime <= 0.0f)
+			destroyList.push_back(i);
+		else
+			soundSystems[i]->update(deltaTime);
+	}
+
+	// destroy the particle system
+	for (unsigned int i = 0; i < destroyList.size(); i++)
+	{
+		int index = destroyList[i];
+		delete soundSystems[index];
+		soundSystems.erase(soundSystems.begin() + index);
 	}
 }
 
@@ -740,7 +768,7 @@ void Window::reuseCharacter(int index)
 	GLfloat lifeCycle = getRandFloat(LIFE_TIME_MIN, LIFE_TIME_MAX);
 	astronaut->setLifeCycle(lifeCycle);
 	// sleep the new generated bot for a few seconds before they move (in order to show the particle effect)
-	astronaut->setStopGap(4.0f);
+	astronaut->setStopGap(PARTICLE_SYSTEM_LIFE);
 	astronaut->setStatus(SLEEP);
 	glm::vec3 randDir;
 	glm::vec2 randDir2d = getRandPoint(-1, 1, -1, 1);
@@ -754,9 +782,10 @@ void Window::reuseCharacter(int index)
 	// add particle system to the worldtransform
 	worldTransform->addChild(particleSystem);
 
-	// player appear sound
-	//SoundEngine->play2D("./Audios/appear.ogg", true);
-	//SoundEngine->play2D("./Audios/disappear.wav", true);
+	// add character appear sound to the sound system
+	SoundSystem* soundSystem = new SoundSystem(SOUND_SYSTEM_LIFE, "./Audios/appear.mp3");
+	soundSystems.push_back(soundSystem);
+
 }
 
 void Window::disableCharacter(int index)

@@ -13,6 +13,7 @@
 #include "Character.h"
 #include "Physics.h"
 #include "ParticleSystem.h"
+#include "SoundSystem.h"
 
 #include "CommonValues.h"
 
@@ -48,9 +49,6 @@ public:
 	static GLuint toonShadingShader;
 	static GLuint particleSystemShader;
 
-	// Sound effect
-	static ISoundEngine* SoundEngine;
-
 	// Constructors and Destructors
 	static bool initializeProgram();
 	static bool initializeObjects();
@@ -83,6 +81,7 @@ public:
 	static void nonPlayerMovement(GLfloat deltaTime);
 
 	static void particleSystemControl(GLfloat deltaTime);
+	static void soundSystemControl(GLfloat deltaTime);
 
 	static void generateCharacter(int type, glm::vec3 color);
 	static void reuseCharacter(int index);

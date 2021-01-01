@@ -53,10 +53,10 @@ public:
 
 	// Update the position of particles if it's alive, offset is the direction from emiiter to the particle
 	void update(GLfloat deltaTime);
+	void update(glm::mat4 C);
 	
 	void useShader(GLuint id) { shaderID = id; }
 	void draw(glm::mat4 C);
-	void ParticleSystem::update(glm::mat4 C);
 
 	static GLfloat getRandFloat(int min, int max) { return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min))); }
 	glm::vec3 getBallPoint(float scale);

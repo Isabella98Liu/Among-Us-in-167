@@ -115,6 +115,7 @@
     <ClCompile Include="ParticleSystem.cpp" />
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="SoundSystem.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
@@ -422,6 +423,7 @@
     <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="SoundSystem.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Transform.h" />

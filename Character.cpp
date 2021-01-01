@@ -189,8 +189,8 @@ void Character::botMove(GLfloat deltaTime)
 
 void Character::botBounce(Physics* obj, int flag)
 {
-	// if this bot is sleeping or the player, treat it as a static object
-	if (status == SLEEP || lifeCycle == 0.0f)
+	// if this bot is sleeping or the player or disappearing, treat it as a static object
+	if (status == SLEEP || status == DISAPPEARING || lifeCycle == 0.0f)
 		return;
 	
 	glm::vec3 normal = glm::vec3(0);
