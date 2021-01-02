@@ -105,30 +105,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Character.cpp" />
-    <ClCompile Include="DirectionalLight.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="packages\glm.0.9.9.800\build\native\include\glm\detail\glm.cpp" />
-    <ClCompile Include="ParticleSystem.cpp" />
-    <ClCompile Include="Physics.cpp" />
-    <ClCompile Include="shader.cpp" />
-    <ClCompile Include="SoundSystem.cpp" />
-    <ClCompile Include="Window.cpp" />
-    <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Character.cpp" />
+    <ClCompile Include="src\DirectionalLight.cpp" />
+    <ClCompile Include="src\Geometry.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\ParticleSystem.cpp" />
+    <ClCompile Include="src\Physics.cpp" />
+    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\SoundSystem.cpp" />
+    <ClCompile Include="src\Transform.cpp" />
+    <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Character.h" />
-    <ClInclude Include="CommonValues.h" />
-    <ClInclude Include="DirectionalLight.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="main.h" />
-    <ClInclude Include="Material.h" />
-    <ClInclude Include="Geometry.h" />
-    <ClInclude Include="Node.h" />
     <ClInclude Include="packages\glm.0.9.9.800\build\native\include\glm\common.hpp" />
     <ClInclude Include="packages\glm.0.9.9.800\build\native\include\glm\detail\compute_common.hpp" />
     <ClInclude Include="packages\glm.0.9.9.800\build\native\include\glm\detail\compute_vector_relational.hpp" />
@@ -420,13 +411,22 @@
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\glut.h" />
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\glxew.h" />
     <ClInclude Include="packages\nupengl.core.0.1.0.1\build\native\include\GL\wglew.h" />
-    <ClInclude Include="ParticleSystem.h" />
-    <ClInclude Include="Physics.h" />
-    <ClInclude Include="shader.h" />
-    <ClInclude Include="SoundSystem.h" />
-    <ClInclude Include="Window.h" />
-    <ClInclude Include="stb_image.h" />
-    <ClInclude Include="Transform.h" />
+    <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Character.h" />
+    <ClInclude Include="src\CommonValues.h" />
+    <ClInclude Include="src\DirectionalLight.h" />
+    <ClInclude Include="src\Geometry.h" />
+    <ClInclude Include="src\Light.h" />
+    <ClInclude Include="src\main.h" />
+    <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\Node.h" />
+    <ClInclude Include="src\ParticleSystem.h" />
+    <ClInclude Include="src\Physics.h" />
+    <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\SoundSystem.h" />
+    <ClInclude Include="src\stb_image.h" />
+    <ClInclude Include="src\Transform.h" />
+    <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
