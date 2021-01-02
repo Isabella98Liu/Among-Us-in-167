@@ -9,6 +9,11 @@
 *.userosscache
 *.sln.docstates
 
+# Skip Models folder
+Models/
+Audios/
+Textures/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
