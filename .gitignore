@@ -14,6 +14,14 @@ Models/
 Audios/
 Textures/
 
+# Skip .dll files
+*.dll
+
+# Skip vs solution config files
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

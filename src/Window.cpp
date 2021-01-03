@@ -140,9 +140,9 @@ bool Window::initializeObjects()
 	lobbyTexture = loadTexture("Models/cse167f20-project4-lobby/amongus_lobby.png");
 
 	// Initialize a new Camera
-	camera = new Camera(glm::vec3(0.0f, 10.0f, 9.0f), 
+	camera = new Camera(glm::vec3(0.0f, 16.0f, 6.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f), 
-						-90.0f, -45.0f, 10.0f, 0.5f);
+						-90.0f, -65.0f, 10.0f, 0.5f);
 
 	// Initialize the world transform
 	worldTransform = new Transform();
