@@ -22,7 +22,9 @@ The player controls one of the astronauts, the rest of the astronauts and their 
 
 Toon shading, a.k.a [cel shading](https://en.wikipedia.org/wiki/Cel_shading), provides a cartoon-style look to a 3D object in computer graphics. It emphasizes silhouettes and applies discrete steps for diffuse shading to make the objects appear to be flat.
 
-<div style="text-align:center"><img src="pics/toon_shading.jpg" width="350" /></div>
+<p align="center">
+  <img src="pics/toon_shading.jpg" width="350" />
+</p>
 
 In this project, you can find the shader for toon shading in `shaders/ToonShading.vert` and `shaders/ToonShading.frag`. The trick to emphasize silhouettes is to detect edges by finding normals that are perpendicular to the current viewing direction, drawing black on these pixels. If you want to control the thickness (i.e. make black edges thicker or thinner), use a threshold for the dot product of viewing direction and normals to decide whether or not to draw black.
 
@@ -49,7 +51,9 @@ The user can control one of the astronauts, the rest of the astronauts and their
 
 The number of active astronauts in the current scene is limited (10 in this project). Each astronaut has a unique color. To mimic real players, these bot astronauts will also occasionally stop for a while when walking.
 
-<div style="text-align:center"><img src="pics/bot_player.gif" width="480" /></div>
+<p align="center">
+  <img src="pics/bot_player.gif" width="480" />
+</p>
 
 ### Particle System
 
@@ -67,7 +71,9 @@ A particle system contains a particle generator that continuously emits new part
 
 This project uses [scene graph](https://en.wikipedia.org/wiki/Scene_graph) structure, that is, each object from the scene is represented by a `Geometry` node, it has a parent `Transform` node which contains the object's transformation matrix from the previous level of node. The picture below shows a simple scene graph structure.
 
-<div style="text-align:center"><img src="pics/scene_graph.jpg" width="480" /></div>
+<p align="center">
+  <img src="pics/scene_graph.JPG" width="480" />
+</p> 
 
 <div style="text-align: right"> Source: <a href="http://ivl.calit2.net/wiki/images/0/05/11_SceneGraphF20.pdf">http://ivl.calit2.net/wiki/images/0/05/11_SceneGraphF20.pdf</a> </div>
 
